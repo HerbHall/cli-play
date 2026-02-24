@@ -1,6 +1,6 @@
-# Binary
-cli-play.exe
-cli-play
+# Binary (root only, not cmd/cli-play/ directory)
+/cli-play.exe
+/cli-play
 
 # IDE
 .vscode/
