@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/herbhall/cli-play/internal/scores"
 )
 
 // GameChoice represents a selectable game entry.
@@ -32,14 +33,16 @@ type Model struct {
 	height   int
 	selected int
 	quitting bool
+	scores   *scores.Store
 }
 
-// New creates a menu model.
-func New() Model {
+// New creates a menu model with optional score display.
+func New(s *scores.Store) Model {
 	return Model{
 		choices:  Games,
 		cursor:   0,
 		selected: -1,
+		scores:   s,
 	}
 }
 
@@ -100,6 +103,9 @@ var (
 
 	footerStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("240"))
+
+	highScoreStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#FFD700"))
 )
 
 // View renders the menu.
@@ -121,6 +127,11 @@ func (m Model) View() string {
 		b.WriteString(ns.Render(choice.Name))
 		b.WriteString("  ")
 		b.WriteString(descStyle.Render(choice.Description))
+
+		if hs := m.highScoreLabel(i); hs != "" {
+			b.WriteString("  ")
+			b.WriteString(highScoreStyle.Render(hs))
+		}
 		b.WriteString("\n")
 	}
 
@@ -162,6 +173,53 @@ func (m Model) Selected() int {
 // after returning from a game.
 func (m *Model) ResetSelection() {
 	m.selected = -1
+}
+
+// highScoreLabel returns a formatted high score string for the given game index.
+func (m Model) highScoreLabel(index int) string {
+	if m.scores == nil {
+		return ""
+	}
+	switch index {
+	case 0: // Yahtzee
+		if e := m.scores.Get("yahtzee"); e != nil {
+			return fmt.Sprintf("[Best: %d]", e.Value)
+		}
+	case 1: // Blackjack
+		if e := m.scores.Get("blackjack"); e != nil {
+			return fmt.Sprintf("[Best: $%d]", e.Value)
+		}
+	case 2: // Wordle
+		if e := m.scores.Get("wordle"); e != nil {
+			return fmt.Sprintf("[Best: %d/6]", e.Value)
+		}
+	case 3: // Minesweeper
+		return m.bestTimeLabel("minesweeper")
+	case 4: // Sudoku
+		return m.bestTimeLabel("sudoku")
+	case 5: // 2048
+		if e := m.scores.Get("2048"); e != nil {
+			return fmt.Sprintf("[Best: %d]", e.Value)
+		}
+	}
+	return ""
+}
+
+// bestTimeLabel returns the best time across all difficulties for a timed game.
+func (m Model) bestTimeLabel(game string) string {
+	var best *scores.Entry
+	for _, diff := range []string{"beginner", "intermediate", "expert", "easy", "medium", "hard"} {
+		e := m.scores.GetDifficulty(game, diff)
+		if e != nil && (best == nil || e.Value < best.Value) {
+			best = e
+		}
+	}
+	if best == nil {
+		return ""
+	}
+	mins := best.Value / 60
+	secs := best.Value % 60
+	return fmt.Sprintf("[Best: %d:%02d]", mins, secs)
 }
 
 // Quitting returns true if the user pressed quit.

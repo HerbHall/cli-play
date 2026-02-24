@@ -25,6 +25,7 @@ type Model struct {
 	height       int
 	done         bool
 	message      string
+	HighScore    int
 }
 
 // New creates a fresh Wordle model.
@@ -88,7 +89,14 @@ func (m Model) updateTyping(key string) (tea.Model, tea.Cmd) {
 		if m.game.IsOver() {
 			m.phase = phaseGameOver
 			if m.game.Won {
-				m.message = fmt.Sprintf("Correct! The word was %s", m.game.Target)
+				guesses := len(m.game.Guesses)
+				if m.HighScore > 0 && guesses < m.HighScore {
+					m.message = fmt.Sprintf("Correct in %d/6! %s — NEW HIGH SCORE!", guesses, m.game.Target)
+				} else if m.HighScore > 0 {
+					m.message = fmt.Sprintf("Correct in %d/6! %s (Best: %d/6)", guesses, m.game.Target, m.HighScore)
+				} else {
+					m.message = fmt.Sprintf("Correct! The word was %s", m.game.Target)
+				}
 			} else {
 				m.message = fmt.Sprintf("The word was %s", m.game.Target)
 			}
@@ -120,6 +128,14 @@ func (m Model) updateGameOver(key string) (tea.Model, tea.Cmd) {
 // Done returns true when the player wants to exit.
 func (m Model) Done() bool {
 	return m.done
+}
+
+// FinalScore returns the number of guesses used, or -1 if the game wasn't won.
+func (m Model) FinalScore() int {
+	if m.game == nil || !m.game.Won {
+		return -1
+	}
+	return len(m.game.Guesses)
 }
 
 // View renders the complete game screen.

@@ -3,10 +3,19 @@ package sudoku
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
+
+type tickMsg struct{}
+
+func tickCmd() tea.Cmd {
+	return tea.Tick(time.Second, func(time.Time) tea.Msg {
+		return tickMsg{}
+	})
+}
 
 const (
 	phaseDifficulty = "difficulty"
@@ -15,16 +24,24 @@ const (
 )
 
 // Model is the Bubbletea model for the Sudoku game.
+// HighScoreFunc returns the best time for a given difficulty, or 0 if none.
+type HighScoreFunc func(difficulty string) int
+
+// Model is the Bubbletea model for the Sudoku game.
 type Model struct {
-	game       *Game
-	cursorRow  int
-	cursorCol  int
-	pencilMode bool
-	width      int
-	height     int
-	done       bool
-	phase      string
-	message    string
+	game          *Game
+	cursorRow     int
+	cursorCol     int
+	pencilMode    bool
+	width         int
+	height        int
+	done          bool
+	phase         string
+	message       string
+	elapsed       int
+	ticking       bool
+	HighScore     int
+	HighScoreFunc HighScoreFunc
 }
 
 // New creates a fresh Sudoku model starting at difficulty selection.
@@ -44,12 +61,43 @@ func (m Model) Done() bool {
 	return m.done
 }
 
+// FinalScore returns the elapsed seconds, or -1 if not won.
+func (m Model) FinalScore() int {
+	if m.game == nil || !m.game.Won {
+		return -1
+	}
+	return m.elapsed
+}
+
+// DifficultyName returns the difficulty as a lowercase string for score tracking.
+func (m Model) DifficultyName() string {
+	if m.game == nil {
+		return "unknown"
+	}
+	switch m.game.Difficulty {
+	case Easy:
+		return "easy"
+	case Medium:
+		return "medium"
+	case Hard:
+		return "hard"
+	}
+	return "unknown"
+}
+
 // Update handles input and advances game state.
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+		return m, nil
+
+	case tickMsg:
+		if m.phase == phasePlaying && m.ticking {
+			m.elapsed++
+			return m, tickCmd()
+		}
 		return m, nil
 
 	case tea.KeyMsg:
@@ -73,21 +121,28 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) updateDifficulty(key string) (tea.Model, tea.Cmd) {
+	var diff Difficulty
 	switch key {
 	case "1":
-		m.game = NewGame(Easy)
-		m.phase = phasePlaying
-		m.message = ""
+		diff = Easy
 	case "2":
-		m.game = NewGame(Medium)
-		m.phase = phasePlaying
-		m.message = ""
+		diff = Medium
 	case "3":
-		m.game = NewGame(Hard)
-		m.phase = phasePlaying
-		m.message = ""
+		diff = Hard
 	case "q", "esc":
 		m.done = true
+		return m, nil
+	default:
+		return m, nil
+	}
+	m.game = NewGame(diff)
+	m.phase = phasePlaying
+	m.message = ""
+	m.elapsed = 0
+	m.ticking = false
+	m.HighScore = 0
+	if m.HighScoreFunc != nil {
+		m.HighScore = m.HighScoreFunc(m.DifficultyName())
 	}
 	return m, nil
 }
@@ -112,23 +167,34 @@ func (m Model) updatePlaying(key string) (tea.Model, tea.Cmd) {
 		}
 	case "1", "2", "3", "4", "5", "6", "7", "8", "9":
 		num := int(key[0] - '0')
+		var cmd tea.Cmd
 		if m.pencilMode {
 			if err := m.game.TogglePencilMark(m.cursorRow, m.cursorCol, num); err != nil {
 				m.message = err.Error()
 			} else {
 				m.message = ""
+				if !m.ticking {
+					m.ticking = true
+					cmd = tickCmd()
+				}
 			}
 		} else {
 			if err := m.game.SetCell(m.cursorRow, m.cursorCol, num); err != nil {
 				m.message = err.Error()
 			} else {
+				if !m.ticking {
+					m.ticking = true
+					cmd = tickCmd()
+				}
 				m.message = ""
 				if m.game.Won {
+					m.ticking = false
 					m.phase = phaseGameOver
 					m.message = "Congratulations! Puzzle solved!"
 				}
 			}
 		}
+		return m, cmd
 	case "0", "delete", "backspace":
 		if err := m.game.ClearCell(m.cursorRow, m.cursorCol); err != nil {
 			m.message = err.Error()
@@ -150,6 +216,7 @@ func (m Model) updatePlaying(key string) (tea.Model, tea.Cmd) {
 			_ = m.game.SetCell(m.cursorRow, m.cursorCol, val)
 			m.message = fmt.Sprintf("Hint: %d", val)
 			if m.game.Won {
+				m.ticking = false
 				m.phase = phaseGameOver
 				m.message = "Congratulations! Puzzle solved!"
 			}
@@ -159,6 +226,8 @@ func (m Model) updatePlaying(key string) (tea.Model, tea.Cmd) {
 		m.cursorRow = 0
 		m.cursorCol = 0
 		m.pencilMode = false
+		m.elapsed = 0
+		m.ticking = false
 		m.message = "New game started"
 	case "q", "esc":
 		m.done = true
@@ -221,19 +290,29 @@ func (m Model) View() string {
 		if m.pencilMode {
 			pencilStatus = "ON"
 		}
-		sections = append(sections, dimStyle.Render(fmt.Sprintf("Pencil Mode: %s  |  %d/81 filled", pencilStatus, m.game.FilledCount())))
+		mins := m.elapsed / 60
+		secs := m.elapsed % 60
+		sections = append(sections, dimStyle.Render(fmt.Sprintf("Pencil Mode: %s  |  %d/81 filled  |  Time: %d:%02d", pencilStatus, m.game.FilledCount(), mins, secs)))
 		if m.message != "" {
 			sections = append(sections, messageStyle.Render(m.message))
 		}
 		sections = append(sections, footerStyle.Render("Arrow/HJKL Move | 1-9 Place | 0 Clear | P Pencil | Z Hint | N New | Q Quit"))
 
 	case phaseGameOver:
-		sections = append(sections,
-			titleStyle.Render("S U D O K U"),
-			"",
-			winStyle.Render("Congratulations! Puzzle Solved!"),
-			"",
-		)
+		sections = append(sections, titleStyle.Render("S U D O K U"), "")
+		mins := m.elapsed / 60
+		secs := m.elapsed % 60
+		switch {
+		case m.HighScore > 0 && m.elapsed < m.HighScore:
+			sections = append(sections, winStyle.Render(fmt.Sprintf("Puzzle Solved! Time: %d:%02d — NEW BEST!", mins, secs)))
+		case m.HighScore > 0:
+			bestM := m.HighScore / 60
+			bestS := m.HighScore % 60
+			sections = append(sections, winStyle.Render(fmt.Sprintf("Puzzle Solved! Time: %d:%02d (Best: %d:%02d)", mins, secs, bestM, bestS)))
+		default:
+			sections = append(sections, winStyle.Render(fmt.Sprintf("Congratulations! Puzzle Solved! Time: %d:%02d", mins, secs)))
+		}
+		sections = append(sections, "")
 		if m.game != nil {
 			sections = append(sections, m.renderGrid(), "")
 		}
