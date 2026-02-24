@@ -1,0 +1,14 @@
+# Binary
+cli-play.exe
+cli-play
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Claude Code
+.claude/settings.local.json
