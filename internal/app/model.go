@@ -4,8 +4,12 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/herbhall/cli-play/internal/blackjack"
 	"github.com/herbhall/cli-play/internal/menu"
+	"github.com/herbhall/cli-play/internal/minesweeper"
 	"github.com/herbhall/cli-play/internal/splash"
+	"github.com/herbhall/cli-play/internal/sudoku"
 	"github.com/herbhall/cli-play/internal/transition"
+	"github.com/herbhall/cli-play/internal/twofortyeight"
+	"github.com/herbhall/cli-play/internal/wordle"
 	"github.com/herbhall/cli-play/internal/yahtzee"
 )
 
@@ -135,8 +139,19 @@ func (m Model) launchGame(index int) (tea.Model, tea.Cmd) {
 	case 1: // Blackjack
 		g := blackjack.New()
 		m.game = &g
+	case 2: // Wordle
+		g := wordle.New()
+		m.game = &g
+	case 3: // Minesweeper
+		g := minesweeper.New()
+		m.game = &g
+	case 4: // Sudoku
+		g := sudoku.New()
+		m.game = &g
+	case 5: // 2048
+		g := twofortyeight.New()
+		m.game = &g
 	default:
-		// Other games not implemented yet -- return to menu.
 		m.menu.ResetSelection()
 		return m, nil
 	}
