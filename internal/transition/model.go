@@ -169,7 +169,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		m.grid.Resize(m.width, m.height)
+		if m.grid != nil {
+			m.grid.Resize(m.width, m.height)
+		}
 		// Recompute positions would require the original text;
 		// for now just update dimensions. A resize mid-transition
 		// is uncommon and the animation is short.
