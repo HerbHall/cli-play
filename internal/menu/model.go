@@ -158,6 +158,12 @@ func (m Model) Selected() int {
 	return m.selected
 }
 
+// ResetSelection clears the selected state so the menu can be reused
+// after returning from a game.
+func (m *Model) ResetSelection() {
+	m.selected = -1
+}
+
 // Quitting returns true if the user pressed quit.
 func (m Model) Quitting() bool {
 	return m.quitting
