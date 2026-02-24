@@ -18,11 +18,12 @@ const (
 
 // Model is the Bubbletea model for the 2048 game.
 type Model struct {
-	game   *Game
-	phase  phase
-	width  int
-	height int
-	done   bool
+	game      *Game
+	phase     phase
+	width     int
+	height    int
+	done      bool
+	HighScore int
 }
 
 // New creates a fresh 2048 model.
@@ -122,6 +123,14 @@ func (m Model) Done() bool {
 	return m.done
 }
 
+// FinalScore returns the game score.
+func (m Model) FinalScore() int {
+	if m.game == nil {
+		return 0
+	}
+	return m.game.Score
+}
+
 // View renders the complete game screen.
 func (m Model) View() string {
 	var sections []string
@@ -130,7 +139,11 @@ func (m Model) View() string {
 	sections = append(sections, titleStyle.Render("2 0 4 8"))
 
 	// Score
-	sections = append(sections, scoreStyle.Render(fmt.Sprintf("Score: %d", m.game.Score)))
+	scoreText := fmt.Sprintf("Score: %d", m.game.Score)
+	if m.HighScore > 0 {
+		scoreText += fmt.Sprintf("  (Best: %d)", m.HighScore)
+	}
+	sections = append(sections, scoreStyle.Render(scoreText))
 
 	sections = append(sections, "")
 
@@ -144,7 +157,11 @@ func (m Model) View() string {
 	case phaseWon:
 		sections = append(sections, wonStyle.Render("You reached 2048!"))
 	case phaseGameOver:
-		sections = append(sections, gameOverStyle.Render(fmt.Sprintf("Game Over! Score: %d", m.game.Score)))
+		if m.HighScore > 0 && m.game.Score > m.HighScore {
+			sections = append(sections, wonStyle.Render(fmt.Sprintf("Game Over! Score: %d — NEW HIGH SCORE!", m.game.Score)))
+		} else {
+			sections = append(sections, gameOverStyle.Render(fmt.Sprintf("Game Over! Score: %d", m.game.Score)))
+		}
 	default:
 		sections = append(sections, "")
 	}

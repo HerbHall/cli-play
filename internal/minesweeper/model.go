@@ -25,18 +25,23 @@ func tickCmd() tea.Cmd {
 	})
 }
 
+// HighScoreFunc returns the best time for a given difficulty, or 0 if none.
+type HighScoreFunc func(difficulty string) int
+
 // Model is the Bubbletea model for the Minesweeper game.
 type Model struct {
-	game      *Game
-	cursorRow int
-	cursorCol int
-	width     int
-	height    int
-	done      bool
-	phase     phase
-	elapsed   int
-	ticking   bool
-	diff      Difficulty
+	game          *Game
+	cursorRow     int
+	cursorCol     int
+	width         int
+	height        int
+	done          bool
+	phase         phase
+	elapsed       int
+	ticking       bool
+	diff          Difficulty
+	HighScore     int
+	HighScoreFunc HighScoreFunc
 }
 
 // New creates a fresh Minesweeper model at the difficulty selection screen.
@@ -54,6 +59,27 @@ func (m Model) Init() tea.Cmd {
 // Done returns true when the player wants to exit to the menu.
 func (m Model) Done() bool {
 	return m.done
+}
+
+// FinalScore returns the elapsed seconds, or -1 if not won.
+func (m Model) FinalScore() int {
+	if m.game == nil || m.game.State != Won {
+		return -1
+	}
+	return m.elapsed
+}
+
+// DifficultyName returns the difficulty as a string for score tracking.
+func (m Model) DifficultyName() string {
+	switch m.diff {
+	case Beginner:
+		return "beginner"
+	case Intermediate:
+		return "intermediate"
+	case Expert:
+		return "expert"
+	}
+	return "unknown"
 }
 
 // Update handles input and advances game state.
@@ -113,6 +139,10 @@ func (m Model) startGame(diff Difficulty) (tea.Model, tea.Cmd) {
 	m.cursorCol = 0
 	m.elapsed = 0
 	m.ticking = false
+	m.HighScore = 0
+	if m.HighScoreFunc != nil {
+		m.HighScore = m.HighScoreFunc(m.DifficultyName())
+	}
 	return m, nil
 }
 
@@ -234,7 +264,17 @@ func (m Model) viewGame() string {
 	if m.phase == phaseGameOver {
 		switch m.game.State {
 		case Won:
-			sections = append(sections, winStyle.Render("YOU WIN!"))
+			mins := m.elapsed / 60
+			secs := m.elapsed % 60
+			if m.HighScore > 0 && m.elapsed < m.HighScore {
+				sections = append(sections, winStyle.Render(fmt.Sprintf("YOU WIN! Time: %d:%02d — NEW BEST!", mins, secs)))
+			} else if m.HighScore > 0 {
+				bestM := m.HighScore / 60
+				bestS := m.HighScore % 60
+				sections = append(sections, winStyle.Render(fmt.Sprintf("YOU WIN! Time: %d:%02d (Best: %d:%02d)", mins, secs, bestM, bestS)))
+			} else {
+				sections = append(sections, winStyle.Render(fmt.Sprintf("YOU WIN! Time: %d:%02d", mins, secs)))
+			}
 		case Lost:
 			sections = append(sections, loseStyle.Render("GAME OVER - Mine hit!"))
 		}

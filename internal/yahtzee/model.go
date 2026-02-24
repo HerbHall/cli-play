@@ -18,13 +18,14 @@ const (
 
 // Model is the Bubbletea model for the Yahtzee game.
 type Model struct {
-	game    *Game
-	phase   phase
-	cursor  int
-	width   int
-	height  int
-	done    bool
-	message string
+	game      *Game
+	phase     phase
+	cursor    int
+	width     int
+	height    int
+	done      bool
+	message   string
+	HighScore int
 }
 
 // New creates a fresh Yahtzee model.
@@ -115,7 +116,14 @@ func (m Model) updateScoring(key string) (tea.Model, tea.Cmd) {
 			m.message = err.Error()
 		} else if m.game.GameOver {
 			m.phase = phaseGameOver
-			m.message = fmt.Sprintf("Game over! Final score: %d", m.game.GrandTotal())
+			total := m.game.GrandTotal()
+			if m.HighScore > 0 && total > m.HighScore {
+				m.message = fmt.Sprintf("Game over! Final score: %d — NEW HIGH SCORE!", total)
+			} else if m.HighScore > 0 {
+				m.message = fmt.Sprintf("Game over! Final score: %d (Best: %d)", total, m.HighScore)
+			} else {
+				m.message = fmt.Sprintf("Game over! Final score: %d", total)
+			}
 		} else {
 			m.phase = phaseRolling
 			m.message = fmt.Sprintf("Turn %d — press R to roll", m.game.Turn)
@@ -147,6 +155,14 @@ func (m Model) updateGameOver(key string) (tea.Model, tea.Cmd) {
 // Done returns true when the player wants to exit.
 func (m Model) Done() bool {
 	return m.done
+}
+
+// FinalScore returns the grand total for score tracking.
+func (m Model) FinalScore() int {
+	if m.game == nil {
+		return 0
+	}
+	return m.game.GrandTotal()
 }
 
 // View renders the complete game screen.
@@ -199,15 +215,13 @@ func (m Model) View() string {
 // --- Dice rendering ---
 
 func diceFace(value int) [5]string {
-	blank := "     "
-	left := " *   "
-	center := "  *  "
-	right := "   * "
-	leftRight := " * * "
-	triLeft := " *   "
-	triRight := "   * "
+	blank := "         "
+	left := "  *      "
+	center := "    *    "
+	right := "      *  "
+	leftRight := "  *   *  "
 
-	var rows [3]string // inner rows only (top, middle, bottom)
+	var rows [3]string
 
 	switch value {
 	case 1:
@@ -226,15 +240,12 @@ func diceFace(value int) [5]string {
 		rows = [3]string{blank, blank, blank}
 	}
 
-	_ = triLeft
-	_ = triRight
-
 	return [5]string{
-		"┌─────┐",
+		"┌─────────┐",
 		"│" + rows[0] + "│",
 		"│" + rows[1] + "│",
 		"│" + rows[2] + "│",
-		"└─────┘",
+		"└─────────┘",
 	}
 }
 
@@ -268,7 +279,7 @@ func renderDice(d Dice) string {
 	// Labels below dice
 	var labels []string
 	for i := 0; i < 5; i++ {
-		label := fmt.Sprintf("  [%d]  ", i+1)
+		label := fmt.Sprintf("    [%d]    ", i+1)
 		if d.Held[i] {
 			labels = append(labels, heldLabelStyle.Render(label))
 		} else {

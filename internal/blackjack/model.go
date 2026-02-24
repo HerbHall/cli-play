@@ -40,15 +40,20 @@ var (
 	helpStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("240"))
 
+	highScoreStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#FFD700"))
+
 	holeCardText = "[??]"
 )
 
 // Model is the Bubbletea model for the blackjack game screen.
 type Model struct {
-	game   *Game
-	width  int
-	height int
-	done   bool
+	game      *Game
+	width     int
+	height    int
+	done      bool
+	HighScore int
 }
 
 // New creates a blackjack model with a starting balance of 1000.
@@ -117,6 +122,14 @@ func (m Model) updatePlayerTurn(key string) (tea.Model, tea.Cmd) {
 		}
 	}
 	return m, nil
+}
+
+// FinalScore returns the player's balance for score tracking.
+func (m Model) FinalScore() int {
+	if m.game == nil {
+		return 0
+	}
+	return m.game.Balance
 }
 
 func (m Model) updateResult(key string) (tea.Model, tea.Cmd) {
@@ -221,7 +234,15 @@ func (m Model) renderStats() string {
 	}
 	stats := labelStyle.Render(fmt.Sprintf("W: %d  L: %d  P: %d",
 		g.Stats.Wins, g.Stats.Losses, g.Stats.Pushes))
-	return balance + bet + "\n" + stats
+	line := balance + bet + "\n" + stats
+	if m.HighScore > 0 {
+		if g.Balance > m.HighScore {
+			line += "\n" + highScoreStyle.Render("NEW HIGH SCORE!")
+		} else {
+			line += "\n" + helpStyle.Render(fmt.Sprintf("Best: $%d", m.HighScore))
+		}
+	}
+	return line
 }
 
 func (m Model) renderMessage() string {
