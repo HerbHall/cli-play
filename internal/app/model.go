@@ -6,6 +6,7 @@ import (
 	"github.com/herbhall/cli-play/internal/menu"
 	"github.com/herbhall/cli-play/internal/minesweeper"
 	"github.com/herbhall/cli-play/internal/scores"
+	"github.com/herbhall/cli-play/internal/settings"
 	"github.com/herbhall/cli-play/internal/splash"
 	"github.com/herbhall/cli-play/internal/sudoku"
 	"github.com/herbhall/cli-play/internal/transition"
@@ -28,6 +29,7 @@ const (
 	screenTransition
 	screenMenu
 	screenGame
+	screenSettings
 )
 
 // Model is the top-level container that routes between screens.
@@ -40,16 +42,20 @@ type Model struct {
 	menu       menu.Model
 	game       gameModel
 	scores     *scores.Store
+	settings   *settings.Store
+	settingsUI settings.Model
 }
 
 // New creates the top-level app model starting at the splash screen.
 func New() Model {
 	s, _ := scores.Load()
+	cfg, _ := settings.Load()
 	return Model{
-		active: screenSplash,
-		splash: splash.New(),
-		menu:   menu.New(s),
-		scores: s,
+		active:   screenSplash,
+		splash:   splash.New(),
+		menu:     menu.New(s),
+		scores:   s,
+		settings: cfg,
 	}
 }
 
@@ -68,6 +74,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.splash, _ = m.splash.Update(msg)
 		m.transition, _ = m.transition.Update(msg)
 		m.menu, _ = m.menu.Update(msg)
+		m.settingsUI, _ = m.settingsUI.Update(msg)
 		if m.game != nil {
 			var updated tea.Model
 			updated, _ = m.game.Update(msg)
@@ -113,7 +120,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 		if sel := m.menu.Selected(); sel >= 0 {
+			if sel == menu.SettingsIndex {
+				m.settingsUI = settings.NewModel(m.settings)
+				sizeMsg := tea.WindowSizeMsg{Width: m.width, Height: m.height}
+				m.settingsUI, _ = m.settingsUI.Update(sizeMsg)
+				m.active = screenSettings
+				m.menu.ResetSelection()
+				return m, m.settingsUI.Init()
+			}
 			return m.launchGame(sel)
+		}
+		return m, cmd
+
+	case screenSettings:
+		var cmd tea.Cmd
+		m.settingsUI, cmd = m.settingsUI.Update(msg)
+		if m.settingsUI.Done() {
+			m.active = screenMenu
+			m.menu.ResetSelection()
+			return m, nil
 		}
 		return m, cmd
 
@@ -245,6 +270,8 @@ func (m Model) View() string {
 		return m.transition.View()
 	case screenMenu:
 		return m.menu.View()
+	case screenSettings:
+		return m.settingsUI.View()
 	case screenGame:
 		if m.game != nil {
 			return m.game.View()
