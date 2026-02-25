@@ -100,7 +100,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.active == screenSplash {
 			// Build the text that the transition will dissolve and reveal.
 			splashText := splash.TitleArt + "\n\n" + splash.Credits
-			menuText := menu.MenuText(m.width, m.height)
+			menuText := m.menu.TransitionText()
 			m.transition = transition.New(m.width, m.height, splashText, menuText)
 			m.active = screenTransition
 			return m, m.transition.Init()
@@ -119,7 +119,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.transition, cmd = m.transition.Update(msg)
 		if m.transition.Done() {
 			m.active = screenMenu
-			return m, m.menu.Init()
+			return m, tea.Batch(tea.ClearScreen, m.menu.Init())
 		}
 		return m, cmd
 

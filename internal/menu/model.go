@@ -438,13 +438,8 @@ var (
 			Foreground(lipgloss.Color("#00FF87"))
 )
 
-// asciiTitle is a styled "CLI PLAY" header.
-var asciiTitle = strings.Join([]string{
-	"  ___  _     ___   ___  _       _   __   __",
-	" / __|| |   |_ _| | _ \\| |     /_\\ \\ \\ / /",
-	"| (__ | |__  | |  |  _/| |__  / _ \\ \\ V / ",
-	" \\___||____||___| |_|  |____|/_/ \\_\\ |_|  ",
-}, "\n")
+// compactTitle is a single-line styled title for the menu header.
+const compactTitle = "CLI PLAY"
 
 // colWidth is the fixed visual width of a single game entry in multi-column mode.
 // cursor(3) + shortcut(4) + icon(3) + name(16) + gap(2) = 28.
@@ -469,20 +464,17 @@ func (m Model) contentHeight(showTitle, showStats, showPreview, showTip bool) in
 	cols := m.columnCount()
 	lines := 0
 	if showTitle {
-		lines += 5 // 4 ASCII art lines + blank
+		lines++ // compact single-line title
 	}
 	if showStats {
-		lines += 2 // stats + blank
+		lines++ // stats line
 	}
-	// Game list: category headers + game rows in grid + inter-category blanks.
-	for i, cat := range categories {
-		if i > 0 {
-			lines++ // blank between categories
-		}
+	// Game list: category headers + game rows in grid (no inter-category blanks).
+	for _, cat := range categories {
 		lines++                                       // header
 		lines += (len(cat.Indices) + cols - 1) / cols // game rows
 	}
-	lines += 2 // blank + settings row
+	lines++ // settings row
 	if showPreview {
 		lines += 8 // border+title+rules+controls ~ 7-8 lines
 	}
@@ -497,8 +489,8 @@ func (m Model) contentHeight(showTitle, showStats, showPreview, showTip bool) in
 func (m Model) View() string {
 	var b strings.Builder
 
-	// Available inner height: total minus border (2) and padding (2).
-	innerH := m.height - 4
+	// Available inner height: total minus border (2).
+	innerH := m.height - 2
 
 	// Progressively hide elements to fit: preview first, then title, then stats, then tips.
 	showTitle := true
@@ -519,10 +511,10 @@ func (m Model) View() string {
 		showTip = false
 	}
 
-	// Title (#22).
+	// Compact title on a single line (#22).
 	if showTitle {
-		b.WriteString(titleStyle.Render(asciiTitle))
-		b.WriteString("\n\n")
+		b.WriteString(titleStyle.Render(compactTitle))
+		b.WriteString("\n")
 	}
 
 	// Session stats bar (#26).
@@ -533,13 +525,13 @@ func (m Model) View() string {
 		}
 		statsLine := fmt.Sprintf("Games played: %d | Session: %dm", m.gamesPlayed, elapsed)
 		b.WriteString(statsStyle.Render(statsLine))
-		b.WriteString("\n\n")
+		b.WriteString("\n")
 	}
 
 	// Welcome back flash (#27).
 	if m.showWelcome {
 		b.WriteString(welcomeStyle.Render("  Welcome back!"))
-		b.WriteString("\n\n")
+		b.WriteString("\n")
 	}
 
 	// Game list with categories (#30), icons (#24), shortcuts (#23).
@@ -553,13 +545,7 @@ func (m Model) View() string {
 			break
 		}
 
-		// Inter-category spacing.
-		if catI > 0 {
-			b.WriteString("\n")
-			visualRow++
-		}
-
-		// Category header.
+		// Category header (no inter-category blank lines to save vertical space).
 		cat := categories[catI]
 		b.WriteString(categoryStyle.Render(fmt.Sprintf("  %s %s", cat.Icon, cat.Name)))
 		b.WriteString("\n")
@@ -594,7 +580,6 @@ func (m Model) View() string {
 	}
 
 	// Settings entry.
-	b.WriteString("\n")
 	for ri, row := range menuRows {
 		if row.gameIndex == SettingsIndex {
 			b.WriteString(m.renderEntry(row, ri, compact))
@@ -627,11 +612,7 @@ func (m Model) View() string {
 	panel := lipgloss.NewStyle().
 		Border(panelBorder).
 		BorderForeground(lipgloss.Color("240")).
-		Padding(1, 2).
-		BorderTop(true).
-		BorderBottom(true).
-		BorderLeft(true).
-		BorderRight(true).
+		Padding(0, 2).
 		Render(b.String())
 
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, panel)
@@ -665,37 +646,137 @@ func (m Model) renderPreview() string {
 	return previewBorder.Render(pb.String())
 }
 
-// MenuText returns the menu layout as plain text (no ANSI styling).
-// The transition model uses this to pre-compute character positions
-// for the reveal animation.
-func MenuText(width, height int) string {
+
+// TransitionText returns the menu layout as plain text (no ANSI, no border)
+// for the transition reveal animation. It mirrors the View() content using
+// the same responsive logic (column count, show/hide flags) so the revealed
+// text matches the real menu layout. The caller (transition) centers it.
+func (m Model) TransitionText() string {
 	var b strings.Builder
 
-	b.WriteString(asciiTitle)
-	b.WriteString("\n\n")
+	innerH := m.height - 2
+	showTitle := true
+	showStats := true
+	showPreview := true
+	showTip := true
 
-	displayIdx := 0
-	for catIdx := range categories {
-		cat := categories[catIdx]
-		if catIdx > 0 {
+	if m.contentHeight(showTitle, showStats, showPreview, showTip) > innerH {
+		showPreview = false
+	}
+	if m.contentHeight(showTitle, showStats, showPreview, showTip) > innerH {
+		showTitle = false
+	}
+	if m.contentHeight(showTitle, showStats, showPreview, showTip) > innerH {
+		showStats = false
+	}
+	if m.contentHeight(showTitle, showStats, showPreview, showTip) > innerH {
+		showTip = false
+	}
+
+	if showTitle {
+		b.WriteString(compactTitle)
+		b.WriteString("\n")
+	}
+	if showStats {
+		b.WriteString(fmt.Sprintf("Games played: %d | Session: 0m", m.gamesPlayed))
+		b.WriteString("\n")
+	}
+
+	cols := m.columnCount()
+	compact := cols > 1
+
+	for catI := range categories {
+		cat := categories[catI]
+		b.WriteString(fmt.Sprintf("  %s\n", cat.Name))
+
+		// Collect game rows for this category.
+		var catGames []int
+		for _, gi := range cat.Indices {
+			for ri, row := range menuRows {
+				if row.gameIndex == gi {
+					catGames = append(catGames, ri)
+					break
+				}
+			}
+		}
+
+		// Render in grid.
+		for i := 0; i < len(catGames); i += cols {
+			for j := 0; j < cols && i+j < len(catGames); j++ {
+				ri := catGames[i+j]
+				row := menuRows[ri]
+				b.WriteString(plainEntry(row, ri == m.cursor, compact))
+				if compact && j < cols-1 && i+j+1 < len(catGames) {
+					b.WriteString("  ")
+				}
+			}
 			b.WriteString("\n")
 		}
-		b.WriteString(fmt.Sprintf("  %s %s\n", cat.Icon, cat.Name))
-		for _, gi := range cat.Indices {
-			label := shortcutLabel(displayIdx)
-			icon := gameIcon[gi]
-			b.WriteString(fmt.Sprintf("   [%s] %-3s%-16s%s\n", label, icon, Games[gi].Name, Games[gi].Description))
-			displayIdx++
+	}
+
+	// Settings.
+	for ri, row := range menuRows {
+		if row.gameIndex == SettingsIndex {
+			b.WriteString(plainEntry(row, ri == m.cursor, compact))
+			b.WriteString("\n")
+			break
 		}
 	}
 
 	b.WriteString("\n")
-	b.WriteString(fmt.Sprintf("       \u2699  %-16s%s\n", "Settings", "Preferences and configuration"))
-
-	b.WriteString("\n")
-	b.WriteString("  \u2191\u2193 Navigate | Enter Select | 1-9/0/a-f Quick Select | Q Quit")
+	if showTip && m.tipIndex < len(tips) {
+		b.WriteString(tips[m.tipIndex])
+		b.WriteString("\n")
+	}
+	b.WriteString("  \u2190\u2191\u2193\u2192 Navigate | Enter Select | 1-9/0/a-f Quick Select | Q Quit")
 
 	return b.String()
+}
+
+// plainEntry renders a single menu entry as plain text (no ANSI).
+func plainEntry(row menuRow, selected, compact bool) string {
+	var e strings.Builder
+
+	// Cursor.
+	if selected {
+		e.WriteString(" \u25b6 ")
+	} else {
+		e.WriteString("   ")
+	}
+
+	// Shortcut.
+	if row.gameIndex < SettingsIndex && row.displayIndex >= 0 {
+		e.WriteString(fmt.Sprintf("[%s] ", shortcutLabel(row.displayIndex)))
+	} else {
+		e.WriteString("    ")
+	}
+
+	// Icon.
+	if icon, ok := gameIcon[row.gameIndex]; ok {
+		e.WriteString(fmt.Sprintf("%-3s", icon))
+	} else if row.gameIndex == SettingsIndex {
+		e.WriteString("\u2699  ")
+	}
+
+	// Name.
+	name := ""
+	if row.gameIndex == SettingsIndex {
+		name = "Settings"
+	} else if row.gameIndex >= 0 && row.gameIndex < len(Games) {
+		name = Games[row.gameIndex].Name
+	}
+	e.WriteString(fmt.Sprintf("%-16s", name))
+
+	// Description only in single-column.
+	if !compact {
+		if row.gameIndex == SettingsIndex {
+			e.WriteString("Preferences and configuration")
+		} else if row.gameIndex >= 0 && row.gameIndex < len(Games) {
+			e.WriteString(Games[row.gameIndex].Description)
+		}
+	}
+
+	return e.String()
 }
 
 // Selected returns the index of the selected game, or -1 if none.

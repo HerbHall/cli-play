@@ -33,7 +33,7 @@ var categories = []category{
 	{Name: "Puzzles", Icon: "\U0001f9e9", Indices: []int{2, 3, 4, 5, 11, 8}}, // Wordle, Minesweeper, Sudoku, 2048, Fifteen Puzzle, Mastermind
 	{Name: "Action", Icon: "\U0001f3ae", Indices: []int{12, 13}},             // Snake, Tetris
 	{Name: "Strategy", Icon: "\U0001f0cf", Indices: []int{6, 7, 10, 9}},      // Hangman, Tic-Tac-Toe, Connect Four, Memory
-	{Name: "Skills", Icon: "\u2328\ufe0f", Indices: []int{15}},               // Typing Test
+	{Name: "Skills", Icon: "\U0001f3af", Indices: []int{15}}, // Typing Test (dart/target -- consistent 2-cell emoji)
 }
 
 // gamePreview holds the info panel text for each game.
