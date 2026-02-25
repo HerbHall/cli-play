@@ -10,7 +10,8 @@ type CharPool struct {
 // NewMatrixPool returns a CharPool with half-width katakana,
 // digits, and a handful of symbols -- the classic Matrix look.
 func NewMatrixPool() *CharPool {
-	var chars []rune
+	// 58 katakana + 10 digits + 9 symbols = 77 chars
+	chars := make([]rune, 0, 77)
 
 	// Half-width katakana: U+FF66 to U+FF9F (58 chars)
 	for r := rune(0xFF66); r <= 0xFF9F; r++ {
@@ -23,9 +24,7 @@ func NewMatrixPool() *CharPool {
 	}
 
 	// Symbols
-	for _, r := range []rune{'<', '>', '=', '+', '-', '*', ':', '.', '|'} {
-		chars = append(chars, r)
-	}
+	chars = append(chars, '<', '>', '=', '+', '-', '*', ':', '.', '|')
 
 	return &CharPool{Chars: chars}
 }

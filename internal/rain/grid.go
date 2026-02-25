@@ -4,11 +4,11 @@ package rain
 type CellState int
 
 const (
-	CellEmpty     CellState = iota
-	CellSplash                     // Splash text character
-	CellRain                       // Active rain character
-	CellDissolving                 // Splash char being eaten by rain
-	CellDeposited                  // Menu char locked in place
+	CellEmpty      CellState = iota
+	CellSplash               // Splash text character
+	CellRain                 // Active rain character
+	CellDissolving           // Splash char being eaten by rain
+	CellDeposited            // Menu char locked in place
 )
 
 // Cell is a single position in the terminal grid.
