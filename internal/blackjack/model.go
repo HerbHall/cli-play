@@ -120,6 +120,8 @@ func (m Model) updatePlayerTurn(key string) (tea.Model, tea.Cmd) {
 		if m.game.CanDoubleDown() {
 			m.game.DoubleDown() //nolint:errcheck // CanDoubleDown pre-validates
 		}
+	case "q":
+		m.done = true
 	}
 	return m, nil
 }
@@ -269,6 +271,7 @@ func (m Model) renderHelp() string {
 		if m.game.CanDoubleDown() {
 			help += "  [D] Double Down"
 		}
+		help += "  [Q] Quit"
 		return helpStyle.Render(help)
 	case PhaseResult:
 		return helpStyle.Render("[Enter/N] New Round  [Q] Quit")

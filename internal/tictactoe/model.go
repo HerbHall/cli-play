@@ -212,7 +212,7 @@ func (m Model) renderBoard() string {
 		rows = append(rows, strings.Join(cells, gridStyle.Render(" │ ")))
 
 		if r < 2 {
-			rows = append(rows, gridStyle.Render("───┼───┼───"))
+			rows = append(rows, gridStyle.Render("─── ┼ ─── ┼ ───"))
 		}
 	}
 
