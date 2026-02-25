@@ -162,7 +162,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.game = nil
 			m.active = screenMenu
 			m.menu.ResetSelection()
-			return m, nil
+			m.menu.IncrementGamesPlayed()
+			m.menu.TriggerEntrance()
+			return m, menu.AnimCmd()
 		}
 		return m, cmd
 	}
