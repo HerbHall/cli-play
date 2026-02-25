@@ -90,11 +90,12 @@ func (m Model) updateTyping(key string) (tea.Model, tea.Cmd) {
 			m.phase = phaseGameOver
 			if m.game.Won {
 				guesses := len(m.game.Guesses)
-				if m.HighScore > 0 && guesses < m.HighScore {
+				switch {
+				case m.HighScore > 0 && guesses < m.HighScore:
 					m.message = fmt.Sprintf("Correct in %d/6! %s — NEW HIGH SCORE!", guesses, m.game.Target)
-				} else if m.HighScore > 0 {
+				case m.HighScore > 0:
 					m.message = fmt.Sprintf("Correct in %d/6! %s (Best: %d/6)", guesses, m.game.Target, m.HighScore)
-				} else {
+				default:
 					m.message = fmt.Sprintf("Correct! The word was %s", m.game.Target)
 				}
 			} else {

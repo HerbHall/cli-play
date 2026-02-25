@@ -264,13 +264,14 @@ func (m Model) viewGame() string {
 		case Won:
 			mins := m.elapsed / 60
 			secs := m.elapsed % 60
-			if m.HighScore > 0 && m.elapsed < m.HighScore {
+			switch {
+			case m.HighScore > 0 && m.elapsed < m.HighScore:
 				sections = append(sections, winStyle.Render(fmt.Sprintf("YOU WIN! Time: %d:%02d — NEW BEST!", mins, secs)))
-			} else if m.HighScore > 0 {
+			case m.HighScore > 0:
 				bestM := m.HighScore / 60
 				bestS := m.HighScore % 60
 				sections = append(sections, winStyle.Render(fmt.Sprintf("YOU WIN! Time: %d:%02d (Best: %d:%02d)", mins, secs, bestM, bestS)))
-			} else {
+			default:
 				sections = append(sections, winStyle.Render(fmt.Sprintf("YOU WIN! Time: %d:%02d", mins, secs)))
 			}
 		case Lost:

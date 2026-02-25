@@ -117,11 +117,12 @@ func (m Model) updateScoring(key string) (tea.Model, tea.Cmd) {
 		} else if m.game.GameOver {
 			m.phase = phaseGameOver
 			total := m.game.GrandTotal()
-			if m.HighScore > 0 && total > m.HighScore {
+			switch {
+			case m.HighScore > 0 && total > m.HighScore:
 				m.message = fmt.Sprintf("Game over! Final score: %d — NEW HIGH SCORE!", total)
-			} else if m.HighScore > 0 {
+			case m.HighScore > 0:
 				m.message = fmt.Sprintf("Game over! Final score: %d (Best: %d)", total, m.HighScore)
-			} else {
+			default:
 				m.message = fmt.Sprintf("Game over! Final score: %d", total)
 			}
 		} else {

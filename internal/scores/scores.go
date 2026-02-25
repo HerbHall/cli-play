@@ -48,7 +48,7 @@ func LoadFrom(path string) (*Store, error) {
 
 	s := &Store{path: path, Scores: GameScores{}}
 
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // G304: path is from UserHomeDir or test-controlled input
 	if err != nil {
 		if os.IsNotExist(err) {
 			return s, nil
@@ -65,14 +65,14 @@ func LoadFrom(path string) (*Store, error) {
 // Save writes the high scores to disk.
 func (s *Store) Save() error {
 	dir := filepath.Dir(s.path)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(dir, 0o750); err != nil {
 		return err
 	}
 	data, err := json.MarshalIndent(s.Scores, "", "  ")
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(s.path, data, 0o644)
+	return os.WriteFile(s.path, data, 0o600)
 }
 
 // Update records a score if it beats the current high score. Returns
