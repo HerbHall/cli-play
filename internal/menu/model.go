@@ -75,20 +75,6 @@ func (r menuRow) isSelectable() bool {
 	return r.gameIndex >= 0
 }
 
-// isCategoryHeader returns true if this row is a section header.
-func (r menuRow) isCategoryHeader() bool {
-	return r.gameIndex < 0
-}
-
-// categoryIndex returns the index into the categories slice for a
-// header row. Returns -1 for non-header rows.
-func (r menuRow) categoryIndex() int {
-	if !r.isCategoryHeader() {
-		return -1
-	}
-	return -(r.gameIndex + 1)
-}
-
 // Tick messages.
 type (
 	tipTickMsg   struct{}
@@ -232,10 +218,15 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			return m, nil
 		}
 
+		cols := m.columnCount()
 		switch msg.String() {
 		case "up", "k":
-			m.cursor = m.prevSelectable(m.cursor)
+			m.cursor = m.skipSelectableN(m.cursor, -cols)
 		case "down", "j":
+			m.cursor = m.skipSelectableN(m.cursor, cols)
+		case "left", "h":
+			m.cursor = m.prevSelectable(m.cursor)
+		case "right", "l":
 			m.cursor = m.nextSelectable(m.cursor)
 		case "enter":
 			m.selected = menuRows[m.cursor].gameIndex
@@ -274,6 +265,85 @@ func (m Model) prevSelectable(current int) int {
 		}
 	}
 	return current
+}
+
+// skipSelectableN jumps n selectable items forward (positive) or backward (negative).
+func (m Model) skipSelectableN(current, n int) int {
+	pos := current
+	step := 1
+	if n < 0 {
+		step = -1
+		n = -n
+	}
+	for i := 0; i < n; i++ {
+		if step > 0 {
+			pos = m.nextSelectable(pos)
+		} else {
+			pos = m.prevSelectable(pos)
+		}
+	}
+	return pos
+}
+
+// renderEntry renders a single game/settings entry. When compact is true
+// (multi-column mode), descriptions and high scores are omitted.
+func (m Model) renderEntry(row menuRow, rowIdx int, compact bool) string {
+	var e strings.Builder
+
+	// Cursor indicator.
+	indicator := "   "
+	ns := nameStyle
+	if rowIdx == m.cursor {
+		if m.blinkOn {
+			indicator = " \u25b6 " // filled triangle
+		} else {
+			indicator = " \u25b7 " // outline triangle
+		}
+		ns = nameSelectedStyle
+	}
+	e.WriteString(cursorStyle.Render(indicator))
+
+	// Shortcut key.
+	if row.gameIndex < SettingsIndex && row.displayIndex >= 0 {
+		label := shortcutLabel(row.displayIndex)
+		e.WriteString(shortcutStyle.Render(fmt.Sprintf("[%s] ", label)))
+	} else {
+		e.WriteString("    ")
+	}
+
+	// Icon.
+	if icon, ok := gameIcon[row.gameIndex]; ok {
+		e.WriteString(iconStyle.Render(fmt.Sprintf("%-3s", icon)))
+	} else if row.gameIndex == SettingsIndex {
+		e.WriteString(iconStyle.Render("\u2699  "))
+	}
+
+	// Name.
+	name := ""
+	if row.gameIndex == SettingsIndex {
+		name = "Settings"
+	} else if row.gameIndex >= 0 && row.gameIndex < len(Games) {
+		name = Games[row.gameIndex].Name
+	}
+	e.WriteString(ns.Render(fmt.Sprintf("%-16s", name)))
+
+	// Description and high score only in single-column mode.
+	if !compact {
+		desc := ""
+		if row.gameIndex == SettingsIndex {
+			desc = "Preferences and configuration"
+		} else if row.gameIndex >= 0 && row.gameIndex < len(Games) {
+			desc = Games[row.gameIndex].Description
+		}
+		e.WriteString(descStyle.Render(desc))
+
+		if hs := m.highScoreLabel(row.gameIndex); hs != "" {
+			e.WriteString("  ")
+			e.WriteString(highScoreStyle.Render(hs))
+		}
+	}
+
+	return e.String()
 }
 
 // shortcutToGameIndex maps a key press to a game index.
@@ -376,22 +446,95 @@ var asciiTitle = strings.Join([]string{
 	" \\___||____||___| |_|  |____|/_/ \\_\\ |_|  ",
 }, "\n")
 
+// colWidth is the fixed visual width of a single game entry in multi-column mode.
+// cursor(3) + shortcut(4) + icon(3) + name(16) + gap(2) = 28.
+const colWidth = 28
+
+// columnCount returns how many game columns fit in the available width.
+func (m Model) columnCount() int {
+	innerW := m.width - 6 // border(2) + padding(4)
+	cols := innerW / colWidth
+	if cols < 1 {
+		cols = 1
+	}
+	if cols > 3 {
+		cols = 3
+	}
+	return cols
+}
+
+// contentHeight estimates the number of inner lines used by the menu,
+// excluding the border/padding chrome (4 lines: top border+pad, bottom pad+border).
+func (m Model) contentHeight(showTitle, showStats, showPreview, showTip bool) int {
+	cols := m.columnCount()
+	lines := 0
+	if showTitle {
+		lines += 5 // 4 ASCII art lines + blank
+	}
+	if showStats {
+		lines += 2 // stats + blank
+	}
+	// Game list: category headers + game rows in grid + inter-category blanks.
+	for i, cat := range categories {
+		if i > 0 {
+			lines++ // blank between categories
+		}
+		lines++                                       // header
+		lines += (len(cat.Indices) + cols - 1) / cols // game rows
+	}
+	lines += 2 // blank + settings row
+	if showPreview {
+		lines += 8 // border+title+rules+controls ~ 7-8 lines
+	}
+	if showTip {
+		lines++
+	}
+	lines++ // footer
+	return lines
+}
+
 // View renders the menu with categories, icons, preview, stats, and tips.
 func (m Model) View() string {
 	var b strings.Builder
 
+	// Available inner height: total minus border (2) and padding (2).
+	innerH := m.height - 4
+
+	// Progressively hide elements to fit: preview first, then title, then stats, then tips.
+	showTitle := true
+	showStats := true
+	showPreview := true
+	showTip := true
+
+	if m.contentHeight(showTitle, showStats, showPreview, showTip) > innerH {
+		showPreview = false
+	}
+	if m.contentHeight(showTitle, showStats, showPreview, showTip) > innerH {
+		showTitle = false
+	}
+	if m.contentHeight(showTitle, showStats, showPreview, showTip) > innerH {
+		showStats = false
+	}
+	if m.contentHeight(showTitle, showStats, showPreview, showTip) > innerH {
+		showTip = false
+	}
+
 	// Title (#22).
-	b.WriteString(titleStyle.Render(asciiTitle))
-	b.WriteString("\n\n")
+	if showTitle {
+		b.WriteString(titleStyle.Render(asciiTitle))
+		b.WriteString("\n\n")
+	}
 
 	// Session stats bar (#26).
-	elapsed := m.sessionMins
-	if elapsed == 0 && time.Since(m.sessionStart) >= 30*time.Second {
-		elapsed = 1
+	if showStats {
+		elapsed := m.sessionMins
+		if elapsed == 0 && time.Since(m.sessionStart) >= 30*time.Second {
+			elapsed = 1
+		}
+		statsLine := fmt.Sprintf("Games played: %d | Session: %dm", m.gamesPlayed, elapsed)
+		b.WriteString(statsStyle.Render(statsLine))
+		b.WriteString("\n\n")
 	}
-	statsLine := fmt.Sprintf("Games played: %d | Session: %dm", m.gamesPlayed, elapsed)
-	b.WriteString(statsStyle.Render(statsLine))
-	b.WriteString("\n\n")
 
 	// Welcome back flash (#27).
 	if m.showWelcome {
@@ -400,98 +543,85 @@ func (m Model) View() string {
 	}
 
 	// Game list with categories (#30), icons (#24), shortcuts (#23).
-	for rowIdx, row := range menuRows {
-		// Entrance animation: skip rows not yet revealed.
-		if m.animStep >= 0 && rowIdx > m.animStep {
+	cols := m.columnCount()
+	compact := cols > 1
+	visualRow := 0
+	gameRows := make([]int, 0, 8) // reused per category
+
+	for catI := range categories {
+		if m.animStep >= 0 && visualRow > m.animStep {
 			break
 		}
 
-		if row.isCategoryHeader() {
-			catIdx := row.categoryIndex()
-			if catIdx >= 0 && catIdx < len(categories) {
-				cat := categories[catIdx]
-				if rowIdx > 0 {
-					b.WriteString("\n")
-				}
-				b.WriteString(categoryStyle.Render(fmt.Sprintf("  %s %s", cat.Icon, cat.Name)))
-				b.WriteString("\n")
-			}
-			continue
-		}
-
-		// Separator before Settings.
-		if row.gameIndex == SettingsIndex {
+		// Inter-category spacing.
+		if catI > 0 {
 			b.WriteString("\n")
+			visualRow++
 		}
 
-		// Cursor indicator (#28, #22).
-		indicator := "   "
-		ns := nameStyle
-		if rowIdx == m.cursor {
-			if m.blinkOn {
-				indicator = " \u25b6 " // filled triangle
-			} else {
-				indicator = " \u25b7 " // outline triangle
-			}
-			ns = nameSelectedStyle
-		}
-
-		b.WriteString(cursorStyle.Render(indicator))
-
-		// Shortcut key (#23).
-		if row.gameIndex < SettingsIndex && row.displayIndex >= 0 {
-			label := shortcutLabel(row.displayIndex)
-			b.WriteString(shortcutStyle.Render(fmt.Sprintf("[%s] ", label)))
-		} else {
-			b.WriteString("    ") // align settings with games
-		}
-
-		// Icon (#24).
-		if icon, ok := gameIcon[row.gameIndex]; ok {
-			b.WriteString(iconStyle.Render(fmt.Sprintf("%-3s", icon)))
-		} else if row.gameIndex == SettingsIndex {
-			b.WriteString(iconStyle.Render("\u2699  ")) // gear for settings
-		}
-
-		// Game name and description.
-		name := ""
-		desc := ""
-		if row.gameIndex == SettingsIndex {
-			name = "Settings"
-			desc = "Preferences and configuration"
-		} else if row.gameIndex >= 0 && row.gameIndex < len(Games) {
-			name = Games[row.gameIndex].Name
-			desc = Games[row.gameIndex].Description
-		}
-
-		b.WriteString(ns.Render(fmt.Sprintf("%-16s", name)))
-		b.WriteString(descStyle.Render(desc))
-
-		// High score.
-		if hs := m.highScoreLabel(row.gameIndex); hs != "" {
-			b.WriteString("  ")
-			b.WriteString(highScoreStyle.Render(hs))
-		}
+		// Category header.
+		cat := categories[catI]
+		b.WriteString(categoryStyle.Render(fmt.Sprintf("  %s %s", cat.Icon, cat.Name)))
 		b.WriteString("\n")
+		visualRow++
+
+		// Collect menuRow indices for this category (in Indices order).
+		gameRows = gameRows[:0]
+		for _, gi := range cat.Indices {
+			for ri, row := range menuRows {
+				if row.gameIndex == gi {
+					gameRows = append(gameRows, ri)
+					break
+				}
+			}
+		}
+
+		// Render games in a grid.
+		for i := 0; i < len(gameRows); i += cols {
+			if m.animStep >= 0 && visualRow > m.animStep {
+				break
+			}
+			for j := 0; j < cols && i+j < len(gameRows); j++ {
+				ri := gameRows[i+j]
+				b.WriteString(m.renderEntry(menuRows[ri], ri, compact))
+				if compact && j < cols-1 && i+j+1 < len(gameRows) {
+					b.WriteString("  ")
+				}
+			}
+			b.WriteString("\n")
+			visualRow++
+		}
+	}
+
+	// Settings entry.
+	b.WriteString("\n")
+	for ri, row := range menuRows {
+		if row.gameIndex == SettingsIndex {
+			b.WriteString(m.renderEntry(row, ri, compact))
+			b.WriteString("\n")
+			break
+		}
 	}
 
 	// Preview panel (#29).
-	preview := m.renderPreview()
-	if preview != "" {
-		b.WriteString("\n")
-		b.WriteString(preview)
+	if showPreview {
+		preview := m.renderPreview()
+		if preview != "" {
+			b.WriteString("\n")
+			b.WriteString(preview)
+		}
 	}
 
 	b.WriteString("\n")
 
 	// Tip ticker (#25).
-	if m.tipIndex < len(tips) {
+	if showTip && m.tipIndex < len(tips) {
 		b.WriteString(tipStyle.Render(tips[m.tipIndex]))
 		b.WriteString("\n")
 	}
 
 	// Footer.
-	b.WriteString(footerStyle.Render("  \u2191\u2193 Navigate | Enter Select | 1-9/0/a-f Quick Select | Q Quit"))
+	b.WriteString(footerStyle.Render("  \u2190\u2191\u2193\u2192 Navigate | Enter Select | 1-9/0/a-f Quick Select | Q Quit"))
 
 	// Wrap in bordered panel (#21).
 	panel := lipgloss.NewStyle().
