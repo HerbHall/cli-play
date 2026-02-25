@@ -3,8 +3,11 @@ package app
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/herbhall/cli-play/internal/blackjack"
+	"github.com/herbhall/cli-play/internal/connectfour"
+	"github.com/herbhall/cli-play/internal/fifteenpuzzle"
 	"github.com/herbhall/cli-play/internal/hangman"
 	"github.com/herbhall/cli-play/internal/mastermind"
+	"github.com/herbhall/cli-play/internal/memory"
 	"github.com/herbhall/cli-play/internal/menu"
 	"github.com/herbhall/cli-play/internal/minesweeper"
 	"github.com/herbhall/cli-play/internal/scores"
@@ -226,6 +229,24 @@ func (m Model) launchGame(index int) (tea.Model, tea.Cmd) {
 			g.HighScore = e.Value
 		}
 		m.game = &g
+	case 9: // Memory
+		g := memory.New()
+		if e := m.scores.Get("memory"); e != nil {
+			g.HighScore = e.Value
+		}
+		m.game = &g
+	case 10: // Connect Four
+		g := connectfour.New()
+		if e := m.scores.Get("connectfour"); e != nil {
+			g.HighScore = e.Value
+		}
+		m.game = &g
+	case 11: // Fifteen Puzzle
+		g := fifteenpuzzle.New()
+		if e := m.scores.Get("fifteenpuzzle"); e != nil {
+			g.HighScore = e.Value
+		}
+		m.game = &g
 	default:
 		m.menu.ResetSelection()
 		return m, nil
@@ -291,6 +312,21 @@ func (m *Model) extractScore() {
 		score := g.FinalScore()
 		if score > 0 {
 			m.scores.Update("mastermind", score, true)
+		}
+	case *memory.Model:
+		score := g.FinalScore()
+		if score > 0 {
+			m.scores.Update("memory", score, true)
+		}
+	case *connectfour.Model:
+		score := g.FinalScore()
+		if score > 0 {
+			m.scores.Update("connectfour", score, false)
+		}
+	case *fifteenpuzzle.Model:
+		score := g.FinalScore()
+		if score > 0 {
+			m.scores.Update("fifteenpuzzle", score, true)
 		}
 	}
 
