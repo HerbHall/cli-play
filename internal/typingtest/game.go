@@ -21,19 +21,19 @@ const (
 
 // Game holds the complete state of a typing test.
 type Game struct {
-	Words          []string
-	State          State
-	CurrentWord    int
-	CharPos        int
-	CorrectChars   int
-	TotalTyped     int
-	Errors         int
-	StartTime      time.Time
-	Elapsed        time.Duration
-	TimeLimit      int
-	WordErrors     [][]bool // per-character error tracking for each word
-	WordCompleted  []bool   // true once a word is submitted via space
-	CurrentErrors  []bool   // error state for characters in the current word
+	Words         []string
+	State         State
+	CurrentWord   int
+	CharPos       int
+	CorrectChars  int
+	TotalTyped    int
+	Errors        int
+	StartTime     time.Time
+	Elapsed       time.Duration
+	TimeLimit     int
+	WordErrors    [][]bool // per-character error tracking for each word
+	WordCompleted []bool   // true once a word is submitted via space
+	CurrentErrors []bool   // error state for characters in the current word
 }
 
 // NewGame creates a new typing test with random words.
