@@ -23,10 +23,13 @@ var Games = []GameChoice{
 	{"Minesweeper", "Clear the field, dodge the mines"},
 	{"Sudoku", "Fill the grid with logic"},
 	{"2048", "Slide and merge to 2048"},
+	{"Hangman", "Guess the word letter by letter"},
+	{"Tic-Tac-Toe", "Beat the AI on a 3x3 grid"},
+	{"Mastermind", "Break the secret color code"},
 }
 
 // SettingsIndex is the menu index for the Settings entry.
-const SettingsIndex = 6
+const SettingsIndex = 9
 
 // Model is the game selection menu.
 type Model struct {
@@ -214,6 +217,18 @@ func (m Model) highScoreLabel(index int) string {
 	case 5: // 2048
 		if e := m.scores.Get("2048"); e != nil {
 			return fmt.Sprintf("[Best: %d]", e.Value)
+		}
+	case 6: // Hangman
+		if e := m.scores.Get("hangman"); e != nil {
+			return fmt.Sprintf("[Best: %d wrong]", e.Value)
+		}
+	case 7: // Tic-Tac-Toe
+		if e := m.scores.Get("tictactoe"); e != nil {
+			return fmt.Sprintf("[Wins: %d]", e.Value)
+		}
+	case 8: // Mastermind
+		if e := m.scores.Get("mastermind"); e != nil {
+			return fmt.Sprintf("[Best: %d guesses]", e.Value)
 		}
 	}
 	return ""

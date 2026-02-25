@@ -3,12 +3,15 @@ package app
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/herbhall/cli-play/internal/blackjack"
+	"github.com/herbhall/cli-play/internal/hangman"
+	"github.com/herbhall/cli-play/internal/mastermind"
 	"github.com/herbhall/cli-play/internal/menu"
 	"github.com/herbhall/cli-play/internal/minesweeper"
 	"github.com/herbhall/cli-play/internal/scores"
 	"github.com/herbhall/cli-play/internal/settings"
 	"github.com/herbhall/cli-play/internal/splash"
 	"github.com/herbhall/cli-play/internal/sudoku"
+	"github.com/herbhall/cli-play/internal/tictactoe"
 	"github.com/herbhall/cli-play/internal/transition"
 	"github.com/herbhall/cli-play/internal/twofortyeight"
 	"github.com/herbhall/cli-play/internal/wordle"
@@ -205,6 +208,24 @@ func (m Model) launchGame(index int) (tea.Model, tea.Cmd) {
 			g.HighScore = e.Value
 		}
 		m.game = &g
+	case 6: // Hangman
+		g := hangman.New()
+		if e := m.scores.Get("hangman"); e != nil {
+			g.HighScore = e.Value
+		}
+		m.game = &g
+	case 7: // Tic-Tac-Toe
+		g := tictactoe.New()
+		if e := m.scores.Get("tictactoe"); e != nil {
+			g.HighScore = e.Value
+		}
+		m.game = &g
+	case 8: // Mastermind
+		g := mastermind.New()
+		if e := m.scores.Get("mastermind"); e != nil {
+			g.HighScore = e.Value
+		}
+		m.game = &g
 	default:
 		m.menu.ResetSelection()
 		return m, nil
@@ -255,6 +276,21 @@ func (m *Model) extractScore() {
 		score := g.FinalScore()
 		if score > 0 {
 			m.scores.Update("2048", score, false)
+		}
+	case *hangman.Model:
+		score := g.FinalScore()
+		if score >= 0 {
+			m.scores.Update("hangman", score, true)
+		}
+	case *tictactoe.Model:
+		score := g.FinalScore()
+		if score > 0 {
+			m.scores.Update("tictactoe", score, false)
+		}
+	case *mastermind.Model:
+		score := g.FinalScore()
+		if score > 0 {
+			m.scores.Update("mastermind", score, true)
 		}
 	}
 
