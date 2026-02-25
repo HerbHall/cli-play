@@ -12,8 +12,10 @@ import (
 	"github.com/herbhall/cli-play/internal/minesweeper"
 	"github.com/herbhall/cli-play/internal/scores"
 	"github.com/herbhall/cli-play/internal/settings"
+	"github.com/herbhall/cli-play/internal/snake"
 	"github.com/herbhall/cli-play/internal/splash"
 	"github.com/herbhall/cli-play/internal/sudoku"
+	"github.com/herbhall/cli-play/internal/tetris"
 	"github.com/herbhall/cli-play/internal/tictactoe"
 	"github.com/herbhall/cli-play/internal/transition"
 	"github.com/herbhall/cli-play/internal/twofortyeight"
@@ -247,6 +249,18 @@ func (m Model) launchGame(index int) (tea.Model, tea.Cmd) {
 			g.HighScore = e.Value
 		}
 		m.game = &g
+	case 12: // Snake
+		g := snake.New()
+		if e := m.scores.Get("snake"); e != nil {
+			g.HighScore = e.Value
+		}
+		m.game = &g
+	case 13: // Tetris
+		g := tetris.New()
+		if e := m.scores.Get("tetris"); e != nil {
+			g.HighScore = e.Value
+		}
+		m.game = &g
 	default:
 		m.menu.ResetSelection()
 		return m, nil
@@ -327,6 +341,16 @@ func (m *Model) extractScore() {
 		score := g.FinalScore()
 		if score > 0 {
 			m.scores.Update("fifteenpuzzle", score, true)
+		}
+	case *snake.Model:
+		score := g.FinalScore()
+		if score > 0 {
+			m.scores.Update("snake", score, false)
+		}
+	case *tetris.Model:
+		score := g.FinalScore()
+		if score > 0 {
+			m.scores.Update("tetris", score, false)
 		}
 	}
 
