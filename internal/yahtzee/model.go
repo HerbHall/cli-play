@@ -159,18 +159,14 @@ func (m Model) View() string {
 
 	// Turn info
 	turnInfo := turnStyle.Render(fmt.Sprintf("Turn %d/13  |  Rolls left: %d", m.game.Turn, m.game.RollsLeft))
-	sections = append(sections, turnInfo)
-
-	sections = append(sections, "")
+	sections = append(sections, turnInfo, "")
 
 	// Dice and scorecard side by side
 	diceBlock := renderDice(m.game.Dice)
 	scorecardBlock := m.renderScorecard()
 
 	middle := lipgloss.JoinHorizontal(lipgloss.Top, diceBlock, "    ", scorecardBlock)
-	sections = append(sections, middle)
-
-	sections = append(sections, "")
+	sections = append(sections, middle, "")
 
 	// Message
 	if m.message != "" {
@@ -295,8 +291,7 @@ func (m Model) renderScorecard() string {
 
 	// Upper totals
 	upperTotal := m.game.Scorecard.UpperTotal()
-	left = append(left, "")
-	left = append(left, dimStyle.Render(fmt.Sprintf("Upper Total ... %d/63", upperTotal)))
+	left = append(left, "", dimStyle.Render(fmt.Sprintf("Upper Total ... %d/63", upperTotal)))
 	bonus := m.game.Scorecard.UpperBonus()
 	if bonus > 0 {
 		left = append(left, potentialStyle.Render(fmt.Sprintf("Bonus ......... %d", bonus)))

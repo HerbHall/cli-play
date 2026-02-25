@@ -1,0 +1,35 @@
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - govet
+    - errcheck
+    - staticcheck
+    - unused
+    - gosimple
+    - ineffassign
+    - gocritic
+    - gofmt
+    - goimports
+    - gosec
+    - prealloc
+
+linters-settings:
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+    disabled-checks:
+      - hugeParam  # Bubbletea tea.Model requires value receivers
+  gosec:
+    excludes:
+      - G104  # unhandled errors on deferred Close()
+      - G404  # math/rand is correct for games, not security code
+      - G101  # false positives on non-credential constants
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0

@@ -310,7 +310,7 @@ func TestDoubleDown(t *testing.T) {
 					card(Ten, Spades), // double down draw
 					card(Ten, Hearts), // dealer draw
 				))
-				g.PlaceBet(50) //nolint:errcheck
+				g.PlaceBet(50) //nolint:errcheck // test setup, error not relevant
 				return g
 			},
 			false,
@@ -325,7 +325,7 @@ func TestDoubleDown(t *testing.T) {
 					card(Three, Diamonds), card(Eight, Clubs),
 					card(Two, Spades), // hit draw
 				))
-				g.PlaceBet(50) //nolint:errcheck
+				g.PlaceBet(50) //nolint:errcheck // test setup, error not relevant
 				g.Hit()
 				return g
 			},
@@ -340,7 +340,7 @@ func TestDoubleDown(t *testing.T) {
 					card(Five, Spades), card(Seven, Hearts),
 					card(Six, Diamonds), card(Eight, Clubs),
 				))
-				g.PlaceBet(50) //nolint:errcheck
+				g.PlaceBet(50) //nolint:errcheck // test setup, error not relevant
 				return g
 			},
 			true,

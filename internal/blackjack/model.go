@@ -171,11 +171,12 @@ func (m Model) renderDealerHand() string {
 	label := labelStyle.Render("Dealer " + scoreStr)
 
 	var cards string
-	if len(g.DealerHand.Cards) == 0 {
+	switch {
+	case len(g.DealerHand.Cards) == 0:
 		cards = ""
-	} else if g.HoleRevealed {
+	case g.HoleRevealed:
 		cards = renderCards(g.DealerHand.Cards)
-	} else {
+	default:
 		shown := styledCard(g.DealerHand.Cards[0])
 		cards = shown + "  " + helpStyle.Render(holeCardText)
 	}
@@ -209,7 +210,7 @@ func styledCard(c Card) string {
 	if c.Suit == Hearts || c.Suit == Diamonds {
 		return cardWhiteStyle.Render(rankStr) + cardRedStyle.Render(suitStr)
 	}
-	return cardWhiteStyle.Render(rankStr+suitStr)
+	return cardWhiteStyle.Render(rankStr + suitStr)
 }
 
 func (m Model) renderStats() string {

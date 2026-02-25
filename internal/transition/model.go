@@ -353,8 +353,8 @@ func (m *Model) reveal() {
 
 // Styles for rendering.
 var (
-	splashStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("15"))
-	depositStyle  = lipgloss.NewStyle().Bold(true).Foreground(rain.ColorDeposited)
+	splashStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("15"))
+	depositStyle = lipgloss.NewStyle().Bold(true).Foreground(rain.ColorDeposited)
 )
 
 // rainStyle returns a styled string for a rain cell using its FadeStep

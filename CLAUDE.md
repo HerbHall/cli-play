@@ -5,9 +5,11 @@ Terminal game collection built with Go + [Bubbletea](https://github.com/charmbra
 ## Build and Run
 
 ```bash
-go build -o cli-play.exe ./cmd/cli-play   # build
-go run ./cmd/cli-play                      # run directly
-go test ./...                              # run all tests
+make build        # build binary
+make test         # run all tests
+make lint         # run golangci-lint
+make run          # run directly
+go run ./cmd/cli-play   # run without make
 ```
 
 ## Project Structure
@@ -52,3 +54,23 @@ Pattern for each game package:
 - Game logic separated from UI (testable without tea.Model)
 - Each game is independent -- no shared state between games
 - Use [Lip Gloss](https://github.com/charmbracelet/lipgloss) for styling
+
+## Development Workflow
+
+- Never commit directly to `main` -- branch per issue
+- Branch naming: `feature/issue-NNN-desc`, `fix/issue-NNN-desc`, `chore/desc`
+- Conventional commits: `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`
+- Co-author tag: `Co-Authored-By: Claude <noreply@anthropic.com>`
+- PR via `gh pr create`, merge after CI passes
+
+### Testing Before Push
+
+```bash
+make build && make test && make lint
+```
+
+## Debugging Tips
+
+- Isolate a failing test: `go test -run TestName ./internal/pkgname/`
+- CI failures: check Actions logs, run job locally, `gh run rerun <run-id>`
+- Bubbletea debugging: use `tea.LogToFile("debug.log", "debug")` temporarily
