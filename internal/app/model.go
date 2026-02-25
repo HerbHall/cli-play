@@ -5,6 +5,7 @@ import (
 	"github.com/herbhall/cli-play/internal/blackjack"
 	"github.com/herbhall/cli-play/internal/menu"
 	"github.com/herbhall/cli-play/internal/minesweeper"
+	"github.com/herbhall/cli-play/internal/scores"
 	"github.com/herbhall/cli-play/internal/splash"
 	"github.com/herbhall/cli-play/internal/sudoku"
 	"github.com/herbhall/cli-play/internal/transition"
@@ -38,14 +39,17 @@ type Model struct {
 	transition transition.Model
 	menu       menu.Model
 	game       gameModel
+	scores     *scores.Store
 }
 
 // New creates the top-level app model starting at the splash screen.
 func New() Model {
+	s, _ := scores.Load()
 	return Model{
 		active: screenSplash,
 		splash: splash.New(),
-		menu:   menu.New(),
+		menu:   menu.New(s),
+		scores: s,
 	}
 }
 
@@ -119,6 +123,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		updated, cmd = m.game.Update(msg)
 		m.game = updated.(gameModel)
 		if m.game.Done() {
+			m.extractScore()
 			m.game = nil
 			m.active = screenMenu
 			m.menu.ResetSelection()
@@ -135,21 +140,45 @@ func (m Model) launchGame(index int) (tea.Model, tea.Cmd) {
 	switch index {
 	case 0: // Yahtzee
 		g := yahtzee.New()
+		if e := m.scores.Get("yahtzee"); e != nil {
+			g.HighScore = e.Value
+		}
 		m.game = &g
 	case 1: // Blackjack
 		g := blackjack.New()
+		if e := m.scores.Get("blackjack"); e != nil {
+			g.HighScore = e.Value
+		}
 		m.game = &g
 	case 2: // Wordle
 		g := wordle.New()
+		if e := m.scores.Get("wordle"); e != nil {
+			g.HighScore = e.Value
+		}
 		m.game = &g
 	case 3: // Minesweeper
 		g := minesweeper.New()
+		g.HighScoreFunc = func(diff string) int {
+			if e := m.scores.GetDifficulty("minesweeper", diff); e != nil {
+				return e.Value
+			}
+			return 0
+		}
 		m.game = &g
 	case 4: // Sudoku
 		g := sudoku.New()
+		g.HighScoreFunc = func(diff string) int {
+			if e := m.scores.GetDifficulty("sudoku", diff); e != nil {
+				return e.Value
+			}
+			return 0
+		}
 		m.game = &g
 	case 5: // 2048
 		g := twofortyeight.New()
+		if e := m.scores.Get("2048"); e != nil {
+			g.HighScore = e.Value
+		}
 		m.game = &g
 	default:
 		m.menu.ResetSelection()
@@ -163,6 +192,48 @@ func (m Model) launchGame(index int) (tea.Model, tea.Cmd) {
 	updated, _ = m.game.Update(sizeMsg)
 	m.game = updated.(gameModel)
 	return m, cmd
+}
+
+// extractScore saves the game result to the scores store.
+func (m *Model) extractScore() {
+	if m.scores == nil || m.game == nil {
+		return
+	}
+
+	switch g := m.game.(type) {
+	case *yahtzee.Model:
+		score := g.FinalScore()
+		if score > 0 {
+			m.scores.Update("yahtzee", score, false)
+		}
+	case *blackjack.Model:
+		score := g.FinalScore()
+		if score > 0 {
+			m.scores.Update("blackjack", score, false)
+		}
+	case *wordle.Model:
+		score := g.FinalScore()
+		if score > 0 {
+			m.scores.Update("wordle", score, true)
+		}
+	case *minesweeper.Model:
+		score := g.FinalScore()
+		if score >= 0 {
+			m.scores.UpdateDifficulty("minesweeper", g.DifficultyName(), score, true)
+		}
+	case *sudoku.Model:
+		score := g.FinalScore()
+		if score >= 0 {
+			m.scores.UpdateDifficulty("sudoku", g.DifficultyName(), score, true)
+		}
+	case *twofortyeight.Model:
+		score := g.FinalScore()
+		if score > 0 {
+			m.scores.Update("2048", score, false)
+		}
+	}
+
+	_ = m.scores.Save()
 }
 
 // View renders the active sub-model.
