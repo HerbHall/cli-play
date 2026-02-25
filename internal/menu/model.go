@@ -75,20 +75,6 @@ func (r menuRow) isSelectable() bool {
 	return r.gameIndex >= 0
 }
 
-// isCategoryHeader returns true if this row is a section header.
-func (r menuRow) isCategoryHeader() bool {
-	return r.gameIndex < 0
-}
-
-// categoryIndex returns the index into the categories slice for a
-// header row. Returns -1 for non-header rows.
-func (r menuRow) categoryIndex() int {
-	if !r.isCategoryHeader() {
-		return -1
-	}
-	return -(r.gameIndex + 1)
-}
-
 // Tick messages.
 type (
 	tipTickMsg   struct{}
