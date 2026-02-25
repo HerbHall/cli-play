@@ -161,10 +161,7 @@ func (m Model) View() string {
 	mins := m.elapsed / 60
 	secs := m.elapsed % 60
 	status := statusStyle.Render(fmt.Sprintf("Moves: %d  Time: %d:%02d", m.game.Moves, mins, secs))
-	sections = append(sections, status, "")
-
-	// Grid
-	sections = append(sections, m.renderGrid(), "")
+	sections = append(sections, status, "", m.renderGrid(), "")
 
 	// Game over message
 	if m.phase == phaseGameOver {

@@ -11,7 +11,7 @@ import (
 type phase int
 
 const (
-	phasePlaying  phase = iota
+	phasePlaying phase = iota
 	phaseGameOver
 )
 
