@@ -202,7 +202,7 @@ func TestIsSolved(t *testing.T) {
 			name: "board with conflict",
 			fn: func() *Game {
 				bad := testSolution
-				bad[0][0] = 3 // duplicates (0,1)=3
+				bad[0][0] = 3 // duplicates the 3 already at row 0, col 1
 				var givens [9][9]bool
 				for r := 0; r < 9; r++ {
 					for c := 0; c < 9; c++ {

@@ -6,7 +6,7 @@ import "math/rand/v2"
 type Difficulty int
 
 const (
-	Beginner     Difficulty = iota
+	Beginner Difficulty = iota
 	Intermediate
 	Expert
 )
@@ -33,7 +33,7 @@ func GetConfig(d Difficulty) DifficultyConfig {
 type CellState int
 
 const (
-	Hidden   CellState = iota
+	Hidden CellState = iota
 	Revealed
 	Flagged
 )

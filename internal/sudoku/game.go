@@ -9,7 +9,7 @@ import (
 type Difficulty int
 
 const (
-	Easy   Difficulty = iota
+	Easy Difficulty = iota
 	Medium
 	Hard
 )
@@ -42,8 +42,8 @@ func (d Difficulty) targetGivens() int {
 
 // Cell represents a single cell on the Sudoku board.
 type Cell struct {
-	Value      int
-	Given      bool
+	Value       int
+	Given       bool
 	PencilMarks [9]bool
 }
 
@@ -67,7 +67,7 @@ func NewGame(diff Difficulty) *Game {
 }
 
 // NewGameWithBoard creates a game from predetermined data (for testing).
-func NewGameWithBoard(board [9][9]int, solution [9][9]int, givens [9][9]bool) *Game {
+func NewGameWithBoard(board, solution [9][9]int, givens [9][9]bool) *Game {
 	var cells [9][9]Cell
 	for r := 0; r < 9; r++ {
 		for c := 0; c < 9; c++ {
@@ -289,7 +289,7 @@ func solveCount(board *[9][9]int, countLimit, count int) int {
 
 // findEmpty returns the first empty cell (value 0) scanning left-to-right,
 // top-to-bottom. Returns (row, col, true) or (0, 0, false) if none.
-func findEmpty(board *[9][9]int) (int, int, bool) {
+func findEmpty(board *[9][9]int) (row, col int, found bool) {
 	for r := 0; r < 9; r++ {
 		for c := 0; c < 9; c++ {
 			if board[r][c] == 0 {
@@ -329,15 +329,14 @@ func isValidPlacement(board *[9][9]int, row, col, num int) bool {
 
 // removeClues removes values from a complete board to create a puzzle,
 // ensuring a unique solution. Returns the puzzle board and solution.
-func removeClues(full [9][9]int, diff Difficulty) ([9][9]Cell, [9][9]int) {
-	solution := full
+func removeClues(full [9][9]int, diff Difficulty) (puzzle [9][9]Cell, solution [9][9]int) {
+	solution = full
 	target := diff.targetGivens()
 
 	// Start with all cells as givens.
-	var board [9][9]Cell
 	for r := 0; r < 9; r++ {
 		for c := 0; c < 9; c++ {
-			board[r][c] = Cell{Value: full[r][c], Given: true}
+			puzzle[r][c] = Cell{Value: full[r][c], Given: true}
 		}
 	}
 
@@ -350,26 +349,26 @@ func removeClues(full [9][9]int, diff Difficulty) ([9][9]Cell, [9][9]int) {
 			break
 		}
 		r, c := pos/9, pos%9
-		saved := board[r][c].Value
+		saved := puzzle[r][c].Value
 
 		// Temporarily remove the value and check uniqueness.
 		var check [9][9]int
 		for ri := 0; ri < 9; ri++ {
 			for ci := 0; ci < 9; ci++ {
-				if board[ri][ci].Given && !(ri == r && ci == c) {
-					check[ri][ci] = board[ri][ci].Value
+				if puzzle[ri][ci].Given && !(ri == r && ci == c) {
+					check[ri][ci] = puzzle[ri][ci].Value
 				}
 			}
 		}
 
 		if solve(&check, 2) == 1 {
-			board[r][c].Value = 0
-			board[r][c].Given = false
+			puzzle[r][c].Value = 0
+			puzzle[r][c].Given = false
 			currentGivens--
 		} else {
-			board[r][c].Value = saved
+			puzzle[r][c].Value = saved
 		}
 	}
 
-	return board, solution
+	return puzzle, solution
 }

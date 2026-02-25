@@ -229,7 +229,7 @@ func TestRemainingGuesses(t *testing.T) {
 		t.Errorf("initial RemainingGuesses() = %d, want 6", g.RemainingGuesses())
 	}
 
-	g.Guess("ABOUT") //nolint:errcheck
+	g.Guess("ABOUT") //nolint:errcheck // error irrelevant; testing remaining count
 	if g.RemainingGuesses() != 5 {
 		t.Errorf("after 1 guess RemainingGuesses() = %d, want 5", g.RemainingGuesses())
 	}

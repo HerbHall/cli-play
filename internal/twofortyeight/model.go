@@ -12,8 +12,8 @@ type phase int
 
 const (
 	phasePlaying  phase = iota
-	phaseWon                    // reached 2048, offer continue or new game
-	phaseGameOver               // no moves left
+	phaseWon            // reached 2048, offer continue or new game
+	phaseGameOver       // no moves left
 )
 
 // Model is the Bubbletea model for the 2048 game.
@@ -126,18 +126,13 @@ func (m Model) Done() bool {
 func (m Model) View() string {
 	var sections []string
 
-	// Title
-	sections = append(sections, titleStyle.Render("2 0 4 8"))
-
-	// Score
-	sections = append(sections, scoreStyle.Render(fmt.Sprintf("Score: %d", m.game.Score)))
-
-	sections = append(sections, "")
-
-	// Board
-	sections = append(sections, m.renderBoard())
-
-	sections = append(sections, "")
+	sections = append(sections,
+		titleStyle.Render("2 0 4 8"),
+		scoreStyle.Render(fmt.Sprintf("Score: %d", m.game.Score)),
+		"",
+		m.renderBoard(),
+		"",
+	)
 
 	// Phase message
 	switch m.phase {
@@ -167,7 +162,7 @@ func (m Model) View() string {
 }
 
 func (m Model) renderBoard() string {
-	var rows []string
+	rows := make([]string, 0, boardSize)
 	for r := range boardSize {
 		var cells []string
 		for c := range boardSize {

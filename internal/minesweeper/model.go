@@ -189,15 +189,17 @@ func (m Model) View() string {
 func (m Model) viewDifficulty() string {
 	var sections []string
 
-	sections = append(sections, titleStyle.Render("M I N E S W E E P E R"))
-	sections = append(sections, "")
-	sections = append(sections, headerStyle.Render("Select Difficulty"))
-	sections = append(sections, "")
-	sections = append(sections, optionStyle.Render("  [1]  Beginner      9 x 9    10 mines"))
-	sections = append(sections, optionStyle.Render("  [2]  Intermediate  16 x 16  40 mines"))
-	sections = append(sections, optionStyle.Render("  [3]  Expert        16 x 30  99 mines"))
-	sections = append(sections, "")
-	sections = append(sections, footerStyle.Render("Q Quit"))
+	sections = append(sections,
+		titleStyle.Render("M I N E S W E E P E R"),
+		"",
+		headerStyle.Render("Select Difficulty"),
+		"",
+		optionStyle.Render("  [1]  Beginner      9 x 9    10 mines"),
+		optionStyle.Render("  [2]  Intermediate  16 x 16  40 mines"),
+		optionStyle.Render("  [3]  Expert        16 x 30  99 mines"),
+		"",
+		footerStyle.Render("Q Quit"),
+	)
 
 	content := lipgloss.JoinVertical(lipgloss.Center, sections...)
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
@@ -217,18 +219,14 @@ func (m Model) viewGame() string {
 		Expert:       "Expert",
 	}
 	title := titleStyle.Render(fmt.Sprintf("Minesweeper - %s", diffNames[m.diff]))
-	sections = append(sections, title)
-	sections = append(sections, "")
+	sections = append(sections, title, "")
 
 	// Status bar
 	remaining := m.game.TotalMines - m.game.FlagsUsed
 	status := statusStyle.Render(fmt.Sprintf("Mines: %d  Flags: %d  Time: %d", remaining, m.game.FlagsUsed, m.elapsed))
-	sections = append(sections, status)
-	sections = append(sections, "")
-
-	// Grid
-	sections = append(sections, m.renderGrid())
-	sections = append(sections, "")
+	sections = append(sections, status, "",
+		m.renderGrid(), "",
+	)
 
 	// Game over message
 	if m.phase == phaseGameOver {

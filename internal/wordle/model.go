@@ -12,7 +12,7 @@ import (
 type phase int
 
 const (
-	phaseTyping   phase = iota
+	phaseTyping phase = iota
 	phaseGameOver
 )
 
@@ -69,7 +69,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) updateTyping(key string) (tea.Model, tea.Cmd) {
 	switch key {
 	case "backspace":
-		if len(m.currentGuess) > 0 {
+		if m.currentGuess != "" {
 			m.currentGuess = m.currentGuess[:len(m.currentGuess)-1]
 			m.message = ""
 		}
@@ -126,22 +126,23 @@ func (m Model) Done() bool {
 func (m Model) View() string {
 	var sections []string
 
-	title := titleStyle.Render("W O R D L E")
-	sections = append(sections, title)
-	sections = append(sections, "")
-
-	sections = append(sections, m.renderGrid())
-	sections = append(sections, "")
-	sections = append(sections, m.renderKeyboard())
-	sections = append(sections, "")
+	sections = append(sections,
+		titleStyle.Render("W O R D L E"),
+		"",
+		m.renderGrid(),
+		"",
+		m.renderKeyboard(),
+		"",
+	)
 
 	if m.message != "" {
 		var msgStyled string
-		if m.game.Won {
+		switch {
+		case m.game.Won:
 			msgStyled = winStyle.Render(m.message)
-		} else if m.game.Over {
+		case m.game.Over:
 			msgStyled = lossStyle.Render(m.message)
-		} else {
+		default:
 			msgStyled = messageStyle.Render(m.message)
 		}
 		sections = append(sections, msgStyled)
@@ -168,11 +169,12 @@ func (m Model) renderGrid() string {
 	var rows []string
 
 	for i := 0; i < m.game.MaxGuesses; i++ {
-		if i < len(m.game.Guesses) {
+		switch {
+		case i < len(m.game.Guesses):
 			rows = append(rows, m.renderGuessRow(m.game.Guesses[i], m.game.Results[i]))
-		} else if i == len(m.game.Guesses) && m.phase == phaseTyping {
+		case i == len(m.game.Guesses) && m.phase == phaseTyping:
 			rows = append(rows, m.renderCurrentRow())
-		} else {
+		default:
 			rows = append(rows, m.renderEmptyRow())
 		}
 	}
@@ -182,7 +184,7 @@ func (m Model) renderGrid() string {
 
 // renderGuessRow renders a completed guess with colored backgrounds.
 func (m Model) renderGuessRow(guess string, result GuessResult) string {
-	var cells []string
+	cells := make([]string, 0, len(guess))
 	for i, ch := range guess {
 		letter := string(ch)
 		var cell string
@@ -215,7 +217,7 @@ func (m Model) renderCurrentRow() string {
 
 // renderEmptyRow renders a blank row placeholder.
 func (m Model) renderEmptyRow() string {
-	var cells []string
+	cells := make([]string, 0, 5)
 	for range 5 {
 		cells = append(cells, emptyCellStyle.Render("   "))
 	}
@@ -225,7 +227,7 @@ func (m Model) renderEmptyRow() string {
 // renderKeyboard draws the on-screen keyboard with per-key coloring.
 func (m Model) renderKeyboard() string {
 	rows := []string{"QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"}
-	var lines []string
+	lines := make([]string, 0, len(rows))
 
 	for i, row := range rows {
 		var keys []string

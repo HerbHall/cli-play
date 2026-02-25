@@ -194,25 +194,29 @@ func (m Model) View() string {
 
 	switch m.phase {
 	case phaseDifficulty:
-		sections = append(sections, titleStyle.Render("S U D O K U"))
-		sections = append(sections, "")
-		sections = append(sections, dimStyle.Render("Select Difficulty:"))
-		sections = append(sections, "")
-		sections = append(sections, numberStyle.Render("1")+" "+labelStyle.Render("Easy   (38 givens)"))
-		sections = append(sections, numberStyle.Render("2")+" "+labelStyle.Render("Medium (30 givens)"))
-		sections = append(sections, numberStyle.Render("3")+" "+labelStyle.Render("Hard   (24 givens)"))
-		sections = append(sections, "")
-		sections = append(sections, footerStyle.Render("1-3 Select | Q Quit"))
+		sections = append(sections,
+			titleStyle.Render("S U D O K U"),
+			"",
+			dimStyle.Render("Select Difficulty:"),
+			"",
+			numberStyle.Render("1")+" "+labelStyle.Render("Easy   (38 givens)"),
+			numberStyle.Render("2")+" "+labelStyle.Render("Medium (30 givens)"),
+			numberStyle.Render("3")+" "+labelStyle.Render("Hard   (24 givens)"),
+			"",
+			footerStyle.Render("1-3 Select | Q Quit"),
+		)
 
 	case phasePlaying:
 		diffLabel := ""
 		if m.game != nil {
 			diffLabel = m.game.Difficulty.String()
 		}
-		sections = append(sections, titleStyle.Render("Sudoku")+" "+dimStyle.Render("- "+diffLabel))
-		sections = append(sections, "")
-		sections = append(sections, m.renderGrid())
-		sections = append(sections, "")
+		sections = append(sections,
+			titleStyle.Render("Sudoku")+" "+dimStyle.Render("- "+diffLabel),
+			"",
+			m.renderGrid(),
+			"",
+		)
 		pencilStatus := "OFF"
 		if m.pencilMode {
 			pencilStatus = "ON"
@@ -224,13 +228,14 @@ func (m Model) View() string {
 		sections = append(sections, footerStyle.Render("Arrow/HJKL Move | 1-9 Place | 0 Clear | P Pencil | Z Hint | N New | Q Quit"))
 
 	case phaseGameOver:
-		sections = append(sections, titleStyle.Render("S U D O K U"))
-		sections = append(sections, "")
-		sections = append(sections, winStyle.Render("Congratulations! Puzzle Solved!"))
-		sections = append(sections, "")
+		sections = append(sections,
+			titleStyle.Render("S U D O K U"),
+			"",
+			winStyle.Render("Congratulations! Puzzle Solved!"),
+			"",
+		)
 		if m.game != nil {
-			sections = append(sections, m.renderGrid())
-			sections = append(sections, "")
+			sections = append(sections, m.renderGrid(), "")
 		}
 		sections = append(sections, footerStyle.Render("N New Game | D Difficulty | Q Quit"))
 	}
@@ -251,11 +256,10 @@ func (m Model) renderGrid() string {
 		// Row of cells
 		for c := 0; c < 9; c++ {
 			// Left wall
-			if c == 0 {
+			switch {
+			case c == 0 || c%3 == 0:
 				b.WriteString(borderStyle.Render("┃"))
-			} else if c%3 == 0 {
-				b.WriteString(borderStyle.Render("┃"))
-			} else {
+			default:
 				b.WriteString(borderStyle.Render("│"))
 			}
 			b.WriteString(m.renderCell(r, c))
