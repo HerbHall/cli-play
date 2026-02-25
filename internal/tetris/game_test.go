@@ -414,15 +414,8 @@ func TestLineClearShiftsRowsDown(t *testing.T) {
 }
 
 func TestWallKickOnRotation(t *testing.T) {
-	// Place T piece against the left wall.
-	g := newTestGame(PieceT, 5, 0)
-	// Rotate to a state that would extend left of col 0.
-	// T rotation state 3: offsets {0,1}, {1,1}, {2,1}, {1,0}
-	// At col 0 this is fine. Rotate again to state 0: {0,0}, {0,1}, {0,2}, {1,1}
-	// Also fine at col 0. Let's try a piece that actually needs a kick.
-
 	// I piece vertical at col 0: offsets {0,0},{1,0},{2,0},{3,0}
-	g = newTestGame(PieceI, 5, 0)
+	g := newTestGame(PieceI, 5, 0)
 	g.Current.Rotation = 1 // vertical: col 0 only
 
 	// Rotate to horizontal: offsets {0,0},{0,1},{0,2},{0,3}

@@ -12,7 +12,7 @@ import (
 type phase int
 
 const (
-	phasePlaying  phase = iota
+	phasePlaying phase = iota
 	phasePaused
 	phaseGameOver
 )
@@ -156,10 +156,7 @@ func (m Model) View() string {
 	if m.HighScore > 0 {
 		scoreText += fmt.Sprintf("  (Best: %d)", m.HighScore)
 	}
-	sections = append(sections, scoreStyle.Render(scoreText), "")
-
-	// Board.
-	sections = append(sections, m.renderBoard(), "")
+	sections = append(sections, scoreStyle.Render(scoreText), "", m.renderBoard(), "")
 
 	// Status message.
 	switch m.phase {

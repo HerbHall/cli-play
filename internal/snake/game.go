@@ -34,14 +34,14 @@ const (
 
 // Game holds the complete state of a Snake game.
 type Game struct {
-	Snake     []Point
-	Dir       Direction
-	Food      Point
-	Score     int
-	State     GameState
-	Width     int
-	Height    int
-	randFunc  func(int) int
+	Snake    []Point
+	Dir      Direction
+	Food     Point
+	Score    int
+	State    GameState
+	Width    int
+	Height   int
+	randFunc func(int) int
 }
 
 // NewGame creates a fresh Snake game with the snake in the center.
