@@ -25,6 +25,9 @@ var Games = []GameChoice{
 	{"2048", "Slide and merge to 2048"},
 }
 
+// SettingsIndex is the menu index for the Settings entry.
+const SettingsIndex = 6
+
 // Model is the game selection menu.
 type Model struct {
 	choices  []GameChoice
@@ -36,10 +39,13 @@ type Model struct {
 	scores   *scores.Store
 }
 
+// allChoices returns Games plus the Settings entry.
+var allChoices = append(Games, GameChoice{"Settings", "Preferences and configuration"})
+
 // New creates a menu model with optional score display.
 func New(s *scores.Store) Model {
 	return Model{
-		choices:  Games,
+		choices:  allChoices,
 		cursor:   0,
 		selected: -1,
 		scores:   s,
@@ -116,6 +122,11 @@ func (m Model) View() string {
 	b.WriteString("\n\n")
 
 	for i, choice := range m.choices {
+		// Separator before Settings.
+		if i == SettingsIndex {
+			b.WriteString("\n")
+		}
+
 		indicator := "  "
 		ns := nameStyle
 		if i == m.cursor {
@@ -154,7 +165,10 @@ func MenuText(width, height int) string {
 	b.WriteString("CLI Play")
 	b.WriteString("\n\n")
 
-	for _, choice := range Games {
+	for i, choice := range allChoices {
+		if i == SettingsIndex {
+			b.WriteString("\n")
+		}
 		b.WriteString(fmt.Sprintf("  %s  %s\n", choice.Name, choice.Description))
 	}
 
