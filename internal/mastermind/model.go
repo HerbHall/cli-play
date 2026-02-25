@@ -114,7 +114,8 @@ func (m Model) updatePlaying(key string) (tea.Model, tea.Cmd) {
 		m.input = [CodeLength]int{}
 		m.cursor = 0
 
-		if m.game.Won() {
+		switch {
+		case m.game.Won():
 			m.phase = phaseGameOver
 			count := m.game.GuessCount()
 			msg := fmt.Sprintf("You cracked the code in %d guess", count)
@@ -126,12 +127,12 @@ func (m Model) updatePlaying(key string) (tea.Model, tea.Cmd) {
 				msg += " NEW BEST!"
 			}
 			m.message = msg
-		} else if m.game.IsOver() {
+		case m.game.IsOver():
 			m.phase = phaseGameOver
 			secret := m.game.Secret()
 			m.message = fmt.Sprintf("Out of guesses! The code was %s",
 				formatCode(secret))
-		} else {
+		default:
 			m.message = fmt.Sprintf("%d exact, %d misplaced",
 				fb.Exact, fb.Misplaced)
 		}
@@ -187,28 +188,23 @@ func (m Model) FinalScore() int {
 func (m Model) View() string {
 	var sections []string
 
-	// Title
-	sections = append(sections, titleStyle.Render("M A S T E R M I N D"))
-
-	// Color legend
-	sections = append(sections, m.renderLegend())
-	sections = append(sections, "")
+	// Title and color legend
+	sections = append(sections, titleStyle.Render("M A S T E R M I N D"), m.renderLegend(), "")
 
 	// Guess rows
 	sections = append(sections, m.renderBoard()...)
 	sections = append(sections, "")
 
 	// Message
-	if m.message != "" {
-		if m.phase == phaseGameOver && m.game.Won() {
-			sections = append(sections, winStyle.Render(m.message))
-		} else if m.phase == phaseGameOver {
-			sections = append(sections, loseStyle.Render(m.message))
-		} else {
-			sections = append(sections, messageStyle.Render(m.message))
-		}
-	} else {
+	switch {
+	case m.message == "":
 		sections = append(sections, "")
+	case m.phase == phaseGameOver && m.game.Won():
+		sections = append(sections, winStyle.Render(m.message))
+	case m.phase == phaseGameOver:
+		sections = append(sections, loseStyle.Render(m.message))
+	default:
+		sections = append(sections, messageStyle.Render(m.message))
 	}
 
 	// Footer
@@ -262,7 +258,7 @@ func (m Model) renderBoard() []string {
 }
 
 func (m Model) renderGuessRow(entry GuessEntry) string {
-	var pegs []string
+	pegs := make([]string, 0, CodeLength)
 	for _, v := range entry.Code {
 		pegs = append(pegs, colorStyle(v).Render("●"))
 	}
@@ -275,7 +271,7 @@ func (m Model) renderGuessRow(entry GuessEntry) string {
 }
 
 func (m Model) renderInputRow() string {
-	var pegs []string
+	pegs := make([]string, 0, CodeLength)
 	for i := range CodeLength {
 		var peg string
 		if m.input[i] != 0 {
@@ -294,7 +290,7 @@ func (m Model) renderInputRow() string {
 }
 
 func (m Model) renderEmptyRow() string {
-	var pegs []string
+	pegs := make([]string, 0, CodeLength)
 	for range CodeLength {
 		pegs = append(pegs, emptyStyle.Render("○"))
 	}
@@ -304,7 +300,7 @@ func (m Model) renderEmptyRow() string {
 }
 
 func renderFeedback(fb Feedback) string {
-	var parts []string
+	parts := make([]string, 0, CodeLength)
 	for range fb.Exact {
 		parts = append(parts, exactStyle.Render("●"))
 	}
@@ -318,7 +314,7 @@ func renderFeedback(fb Feedback) string {
 }
 
 func formatCode(code [CodeLength]int) string {
-	var parts []string
+	parts := make([]string, 0, CodeLength)
 	for _, v := range code {
 		parts = append(parts, colorStyle(v).Render("●"))
 	}

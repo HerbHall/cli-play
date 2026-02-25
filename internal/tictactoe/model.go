@@ -165,27 +165,22 @@ func (m Model) resultMessage() string {
 func (m Model) View() string {
 	var sections []string
 
-	// Title
-	sections = append(sections, titleStyle.Render("T I C - T A C - T O E"), "")
-
-	// Board
-	sections = append(sections, m.renderBoard(), "")
+	// Title and board
+	sections = append(sections, titleStyle.Render("T I C - T A C - T O E"), "", m.renderBoard(), "")
 
 	// Status message
-	if m.phase == phaseGameOver {
-		switch m.game.GameState() {
-		case Won:
-			sections = append(sections, winStyle.Render(m.message))
-		case Lost:
-			sections = append(sections, loseStyle.Render(m.message))
-		case Draw:
-			sections = append(sections, drawStyle.Render(m.message))
-		default:
-			sections = append(sections, messageStyle.Render(m.message))
-		}
-	} else if m.message != "" {
+	switch {
+	case m.phase == phaseGameOver && m.game.GameState() == Won:
+		sections = append(sections, winStyle.Render(m.message))
+	case m.phase == phaseGameOver && m.game.GameState() == Lost:
+		sections = append(sections, loseStyle.Render(m.message))
+	case m.phase == phaseGameOver && m.game.GameState() == Draw:
+		sections = append(sections, drawStyle.Render(m.message))
+	case m.phase == phaseGameOver:
 		sections = append(sections, messageStyle.Render(m.message))
-	} else {
+	case m.message != "":
+		sections = append(sections, messageStyle.Render(m.message))
+	default:
 		sections = append(sections, messageStyle.Render("Your turn — place X"))
 	}
 	sections = append(sections, "")
