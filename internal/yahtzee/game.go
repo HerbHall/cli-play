@@ -174,6 +174,9 @@ func ScoreCategory(dice [5]int, cat Category) int {
 		return scoreYahtzee(dice)
 	case Chance:
 		return scoreChance(dice)
+	case NumCategories:
+		// Sentinel value; not a real category.
+		return 0
 	}
 	return 0
 }

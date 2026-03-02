@@ -185,7 +185,7 @@ func slideLine(line [boardSize]int) slideResult {
 		if compact[i] == 0 {
 			break
 		}
-		if i+1 < boardSize && compact[i] == compact[i+1] {
+		if i+1 < boardSize && compact[i] == compact[i+1] { //nolint:gosec // G602: i+1 bounds-checked on same line
 			merged := compact[i] * 2
 			result[ri] = merged
 			score += merged

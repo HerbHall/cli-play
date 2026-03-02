@@ -234,6 +234,8 @@ func (g *Game) ToggleFlag(row, col int) {
 	case Flagged:
 		cell.State = Hidden
 		g.FlagsUsed--
+	case Revealed:
+		// Already revealed; cannot toggle flag.
 	}
 }
 

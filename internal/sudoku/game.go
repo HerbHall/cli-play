@@ -355,7 +355,7 @@ func removeClues(full [9][9]int, diff Difficulty) (puzzle [9][9]Cell, solution [
 		var check [9][9]int
 		for ri := 0; ri < 9; ri++ {
 			for ci := 0; ci < 9; ci++ {
-				if puzzle[ri][ci].Given && !(ri == r && ci == c) {
+				if puzzle[ri][ci].Given && (ri != r || ci != c) {
 					check[ri][ci] = puzzle[ri][ci].Value
 				}
 			}

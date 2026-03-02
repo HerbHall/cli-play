@@ -88,6 +88,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.updatePlayerTurn(key)
 		case PhaseResult:
 			return m.updateResult(key)
+		case PhaseDealerTurn:
+			// Dealer turn is automated; no player input accepted.
 		}
 	}
 

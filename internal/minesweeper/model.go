@@ -217,7 +217,7 @@ func (m Model) View() string {
 }
 
 func (m Model) viewDifficulty() string {
-	var sections []string
+	sections := make([]string, 0, 9)
 
 	sections = append(sections,
 		titleStyle.Render("M I N E S W E E P E R"),
@@ -276,6 +276,8 @@ func (m Model) viewGame() string {
 			}
 		case Lost:
 			sections = append(sections, loseStyle.Render("GAME OVER - Mine hit!"))
+		case Playing:
+			// Still playing; no game-over message.
 		}
 		sections = append(sections, "")
 	}

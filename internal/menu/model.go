@@ -646,7 +646,6 @@ func (m Model) renderPreview() string {
 	return previewBorder.Render(pb.String())
 }
 
-
 // TransitionText returns the menu layout as plain text (no ANSI, no border)
 // for the transition reveal animation. It mirrors the View() content using
 // the same responsive logic (column count, show/hide flags) so the revealed
@@ -678,7 +677,7 @@ func (m Model) TransitionText() string {
 		b.WriteString("\n")
 	}
 	if showStats {
-		b.WriteString(fmt.Sprintf("Games played: %d | Session: 0m", m.gamesPlayed))
+		fmt.Fprintf(&b, "Games played: %d | Session: 0m", m.gamesPlayed)
 		b.WriteString("\n")
 	}
 
@@ -687,7 +686,7 @@ func (m Model) TransitionText() string {
 
 	for catI := range categories {
 		cat := categories[catI]
-		b.WriteString(fmt.Sprintf("  %s\n", cat.Name))
+		fmt.Fprintf(&b, "  %s\n", cat.Name)
 
 		// Collect game rows for this category.
 		var catGames []int
@@ -746,14 +745,14 @@ func plainEntry(row menuRow, selected, compact bool) string {
 
 	// Shortcut.
 	if row.gameIndex < SettingsIndex && row.displayIndex >= 0 {
-		e.WriteString(fmt.Sprintf("[%s] ", shortcutLabel(row.displayIndex)))
+		fmt.Fprintf(&e, "[%s] ", shortcutLabel(row.displayIndex))
 	} else {
 		e.WriteString("    ")
 	}
 
 	// Icon.
 	if icon, ok := gameIcon[row.gameIndex]; ok {
-		e.WriteString(fmt.Sprintf("%-3s", icon))
+		fmt.Fprintf(&e, "%-3s", icon)
 	} else if row.gameIndex == SettingsIndex {
 		e.WriteString("\u2699  ")
 	}
@@ -765,7 +764,7 @@ func plainEntry(row menuRow, selected, compact bool) string {
 	} else if row.gameIndex >= 0 && row.gameIndex < len(Games) {
 		name = Games[row.gameIndex].Name
 	}
-	e.WriteString(fmt.Sprintf("%-16s", name))
+	fmt.Fprintf(&e, "%-16s", name)
 
 	// Description only in single-column.
 	if !compact {
