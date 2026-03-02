@@ -1,6 +1,9 @@
 # cli-play
 
-Terminal game collection built with Go + [Bubbletea](https://github.com/charmbracelet/bubbletea). Quick games to play in VS Code's integrated terminal while waiting for builds, CI, etc.
+Terminal game collection built with Go +
+[Bubbletea](https://github.com/charmbracelet/bubbletea).
+Quick games to play in VS Code's integrated terminal while
+waiting for builds, CI, etc.
 
 ## Build and Run
 
@@ -31,7 +34,9 @@ cli-play/
 
 ## Architecture
 
-Each game is a self-contained Bubbletea `tea.Model` in its own package under `internal/`. The menu package provides the launcher UI. Games return to the menu when finished or when the user quits.
+Each game is a self-contained Bubbletea `tea.Model` in its own
+package under `internal/`. The menu package provides the launcher
+UI. Games return to the menu when finished or when the user quits.
 
 Pattern for each game package:
 
