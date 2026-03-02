@@ -268,9 +268,10 @@ func (m Model) renderKeyboard() string {
 		}
 		line := strings.Join(keys, "")
 		// Indent the second and third rows for staggered keyboard look.
-		if i == 1 {
+		switch i {
+		case 1:
 			line = " " + line
-		} else if i == 2 {
+		case 2:
 			line = "  " + line
 		}
 		lines = append(lines, line)

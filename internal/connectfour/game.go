@@ -219,6 +219,8 @@ func (g *Game) switchTurn() {
 		g.current = Yellow
 	case Yellow:
 		g.current = Red
+	case Empty:
+		// Empty is not a valid player; no action.
 	}
 }
 

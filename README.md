@@ -7,7 +7,7 @@ splash screen and a game selection menu.
 ## Games
 
 | Game | Status |
-|------|--------|
+| ------ | -------- |
 | Yahtzee | Playable |
 | Blackjack | Playable |
 | Wordle | Coming soon |

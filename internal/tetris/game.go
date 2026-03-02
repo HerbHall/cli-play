@@ -98,7 +98,7 @@ func (p Piece) Cells() [4]Point {
 	rot := rots[p.Rotation%len(rots)]
 	var cells [4]Point
 	for i, off := range rot {
-		cells[i] = Point{p.Row + off.Row, p.Col + off.Col}
+		cells[i] = Point{p.Row + off.Row, p.Col + off.Col} //nolint:gosec // G602: rot is [4]Point, i bounded by range
 	}
 	return cells
 }

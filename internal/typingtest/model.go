@@ -162,7 +162,7 @@ func (m Model) View() string {
 }
 
 func (m Model) viewReady() []string {
-	var sections []string
+	sections := make([]string, 0, 5)
 
 	sections = append(sections,
 		m.renderTextBlock(),
@@ -175,7 +175,7 @@ func (m Model) viewReady() []string {
 }
 
 func (m Model) viewPlaying() []string {
-	var sections []string
+	sections := make([]string, 0, 5)
 
 	sections = append(sections,
 		m.renderTextBlock(),

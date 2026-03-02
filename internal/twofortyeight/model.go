@@ -181,7 +181,7 @@ func (m Model) View() string {
 func (m Model) renderBoard() string {
 	rows := make([]string, 0, boardSize)
 	for r := range boardSize {
-		var cells []string
+		cells := make([]string, 0, boardSize)
 		for c := range boardSize {
 			cells = append(cells, renderTile(m.game.Board[r][c]))
 		}

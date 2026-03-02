@@ -65,7 +65,7 @@ func (r Rank) String() string {
 	case King:
 		return "K"
 	default:
-		return string(rune('0' + int(r)))
+		return string(rune('0' + int(r))) //nolint:gosec // G115: r is Rank 2-9, fits in rune
 	}
 }
 

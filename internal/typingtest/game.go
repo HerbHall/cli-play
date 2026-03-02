@@ -76,7 +76,7 @@ func (g *Game) TypeChar(ch rune) {
 	}
 
 	g.TotalTyped++
-	if byte(ch) == word[g.CharPos] {
+	if byte(ch) == word[g.CharPos] { //nolint:gosec // G115: ch is ASCII typing input, fits in byte
 		g.CorrectChars++
 		g.CurrentErrors[g.CharPos] = false
 	} else {

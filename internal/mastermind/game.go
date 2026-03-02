@@ -31,7 +31,7 @@ type Game struct {
 func NewGame() *Game {
 	var secret [CodeLength]int
 	for i := range secret {
-		secret[i] = rand.IntN(NumColors) + 1
+		secret[i] = rand.IntN(NumColors) + 1 //nolint:gosec // G602: i bounded by fixed-size array range
 	}
 	return &Game{secret: secret}
 }
