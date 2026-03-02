@@ -1,0 +1,16 @@
+# Normalize line endings for all text files
+* text=auto
+
+# Force LF for Go source files (gofmt requires LF)
+*.go text eol=lf
+
+# Force LF for shell scripts
+*.sh text eol=lf
+
+# Force LF for Makefiles
+Makefile text eol=lf
+
+# Force CRLF for Windows-specific files
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
