@@ -50,20 +50,31 @@ func compute(data []float64) (score float64, detail string) {
 
 Fix these before committing:
 
-- **rangeValCopy**: `for _, v := range slice` on structs >64 bytes -- use `for i := range slice { slice[i]... }`
-- **prealloc**: `var result []T` in a loop -- use `make([]T, 0, len(source))`
-- **appendCombine**: two consecutive `append()` to same slice -- combine into one call
-- **emptyStringTest**: `len(s) > 0` -- use `s != ""`
-- **httpNoBody**: `http.NewRequestWithContext(ctx, method, url, nil)` -- use `http.NoBody`
-- **bodyclose**: always close `resp.Body`, including deferred: `defer func() { _ = resp.Body.Close() }()`
-- **exhaustive**: switch on enum types must list ALL cases explicitly
-- **noctx**: use `ExecContext`, `QueryContext`, `QueryRowContext` instead of context-less variants
-- **paramTypeCombine**: `(a int, b int)` -- combine consecutive same-type params to `(a, b int)`
-- **builtinShadow**: don't use `new`, `make`, `len`, `cap`, `close`, `delete`, `copy`, `append`, `min`, `max`, `clear` as parameter names
-- **gosec G101**: constants named like credentials (containing "password", "token", "secret") need `//nolint:gosec // G101: <reason>`
-- **preferFprint**: `b.WriteString(fmt.Sprintf(...))` -- use `fmt.Fprintf(&b, ...)` instead
-- **dupBranchBody**: identical `if`/`else` branches -- remove the conditional, keep just the body
-- **sloppyReassign**: `if err = f(); err != nil` with named return `err` -- use `:=` to shadow instead
+- **rangeValCopy**: `for _, v := range slice` on large structs.
+  Use `for i := range slice { slice[i]... }`
+- **prealloc**: `var result []T` in a loop.
+  Use `make([]T, 0, len(source))`
+- **appendCombine**: two consecutive `append()` to same slice.
+  Combine into one call
+- **emptyStringTest**: `len(s) > 0`. Use `s != ""`
+- **httpNoBody**: use `http.NoBody` instead of `nil` body
+- **bodyclose**: always close `resp.Body`. Deferred:
+  `defer func() { _ = resp.Body.Close() }()`
+- **exhaustive**: switch on enum types must list ALL cases
+- **noctx**: use `ExecContext`, `QueryContext`,
+  `QueryRowContext` instead of context-less variants
+- **paramTypeCombine**: `(a int, b int)` becomes `(a, b int)`
+- **builtinShadow**: don't shadow `new`, `make`, `len`,
+  `cap`, `close`, `delete`, `copy`, `append`, `min`, `max`,
+  `clear` as parameter names
+- **gosec G101**: credential-adjacent constants need
+  `//nolint:gosec // G101: <reason>`
+- **preferFprint**: use `fmt.Fprintf(&b, ...)` instead of
+  `b.WriteString(fmt.Sprintf(...))`
+- **dupBranchBody**: identical `if`/`else` branches.
+  Remove the conditional, keep just the body
+- **sloppyReassign**: `if err = f(); err != nil` with named
+  return `err`. Use `:=` to shadow instead
 
 ## Testing
 
@@ -103,7 +114,8 @@ mux.HandleFunc("GET /items/{id}", h.getItem)
 mux.HandleFunc("POST /items", h.createItem)
 ```
 
-Always name `*http.Request` parameter even if unused -- expanding stubs later requires it.
+Always name `*http.Request` parameter even if unused.
+Expanding stubs later requires it.
 
 ## Imports
 

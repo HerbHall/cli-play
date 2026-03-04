@@ -79,7 +79,8 @@ cli-play/
 
 These are unconditional -- no optimization or time pressure overrides them:
 
-1. **Quality**: Once found, always fix, never leave. There is no "pre-existing" error.
+1. **Quality**: Once found, always fix, never leave.
+   There is no "pre-existing" error.
 2. **Verification**: Build, test, and lint must pass before any commit.
 3. **Safety**: Never force-push `main`. Never skip hooks. Never commit secrets.
 4. **Honesty**: Never mark work as complete when it is not.
